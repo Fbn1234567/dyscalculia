@@ -2,57 +2,64 @@
 <html>
 
 <head>
-
-<title>Student Dashboard</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
-<div class="navbar">
-Dyscalculia Detection System
-</div>
+    <div class="navbar">
+        Dyscalculia Detection System
+    </div>
 
-<div class="container">
+    <div class="container">
 
-<h2>Student Dashboard</h2>
+        <h2>Student Dashboard</h2>
 
-<p>Welcome {{ user }}</p>
+        <p class="center">Welcome {{ user }}</p>
 
-<div class="dashboard-grid">
+        <div class="dashboard-grid">
 
-<div class="dashboard-card">
+            <div class="dashboard-card">
 
-<h3>Full Cognitive Test</h3>
+                <h3>Full Cognitive Test</h3>
 
-<p>Symbolic + ANS + Working Memory</p>
+                <p>Symbolic + ANS + Working Memory</p>
 
-<a href="/start_cognitive" class="btn btn-primary">
-Start Assessment
-</a>
+                <a href="/start_cognitive" class="btn btn-primary">
+                    Start Assessment
+                </a>
 
-</div>
+            </div>
 
-<div class="dashboard-card">
+            <div class="dashboard-card">
 
-<h3>View History</h3>
+                <h3>View History</h3>
 
-<p>See your previous results</p>
+                <p>See your previous results</p>
 
-<a href="/history" class="btn btn-success">
-View History
-</a>
-<a href="/logout" class="btn btn-danger">
-Logout
-</a>
+                <a href="/history" class="btn btn-success">
+                    View History
+                </a>
 
-</div>
+            </div>
 
-</div>
+            <div class="dashboard-card">
 
-</div>
+                <h3>Logout</h3>
+
+                <p>Exit your account</p>
+
+                <a href="/logout" class="btn btn-danger">
+                    Logout
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </body>
+
 </html>

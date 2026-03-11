@@ -1,51 +1,53 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>Working Memory Test</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Working Memory Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
-<div class="container">
+    <div class="container">
 
-<div class="card center">
+        <div class="card center">
 
-<h2>Working Memory Task ({{ mode|capitalize }} Span)</h2>
+            <h2>Working Memory Task</h2>
 
-<p>Memorize this sequence:</p>
+            <p>Memorize this sequence:</p>
 
-<h1 id="sequence">{{ sequence }}</h1>
+            <h1 id="sequence">{{ sequence }}</h1>
 
-<form method="post" action="/submit_wm" id="wmForm" style="display:none;">
+            <form method="post" action="/submit_wm" id="wmForm" style="display:none;">
 
-<p>Enter the sequence:</p>
+                <p>Enter the sequence:</p>
 
-<input type="text" name="answer" placeholder="Enter numbers" required>
+                <input type="text" name="answer" placeholder="Enter numbers" required>
 
-<br><br>
+                <br><br>
 
-<button type="submit" class="btn btn-primary">
-Submit
-</button>
+                <button type="submit" class="btn btn-primary">
+                    Submit
+                </button>
 
-</form>
+            </form>
 
-</div>
+        </div>
 
-</div>
+    </div>
 
-<script>
+    <script>
 
-setTimeout(function(){
+        setTimeout(function () {
 
-document.getElementById("sequence").innerText = "Enter the sequence now";
+            document.getElementById("sequence").innerText = "Enter the sequence now";
 
-document.getElementById("wmForm").style.display = "block";
+            document.getElementById("wmForm").style.display = "block";
 
-}, 3000);
+        }, 3000);
 
-</script>
+    </script>
 
 </body>
+
 </html>

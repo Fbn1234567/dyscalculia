@@ -19,15 +19,7 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 # DATABASE CONNECTION
 # -----------------------------
 def get_db_connection():
-    try:
-        conn = psycopg2.connect(
-            DATABASE_URL,
-            sslmode="require"   # REQUIRED for Supabase
-        )
-        return conn
-    except Exception as e:
-        print("Database connection error:", e)
-        return None
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
 # -----------------------------
@@ -37,11 +29,14 @@ model = None
 label_encoder = None
 
 try:
-    model = pickle.load(open("model.pkl", "rb"))
-    label_encoder = pickle.load(open("label_encoder.pkl", "rb"))
-    print("Model loaded successfully")
+    with open("model.pkl","rb") as f:
+        model = pickle.load(f)
+
+    with open("label_encoder.pkl","rb") as f:
+        label_encoder = pickle.load(f)
+
 except Exception as e:
-    print("Model loading error:", e)
+    print("Model loading error:",e)
 
 
 # -----------------------------
@@ -49,67 +44,63 @@ except Exception as e:
 # -----------------------------
 @app.route('/')
 def home():
+
     if "user" in session:
-        return redirect(url_for("dashboard"))
-    return redirect(url_for("login"))
+        return redirect("/dashboard")
+
+    return redirect("/login")
 
 
 # -----------------------------
 # REGISTER
 # -----------------------------
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/register',methods=["GET","POST"])
 def register():
 
-    conn = get_db_connection()
-    if conn is None:
-        return "Database connection failed"
+    conn=get_db_connection()
+    cur=conn.cursor(cursor_factory=RealDictCursor)
 
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("SELECT id,email FROM users WHERE role='Teacher'")
+    teachers=cur.fetchall()
 
-    cursor.execute("SELECT id,email FROM users WHERE role='Teacher'")
-    teachers = cursor.fetchall()
+    cur.execute("SELECT id,email FROM users WHERE role='Parent'")
+    parents=cur.fetchall()
 
-    cursor.execute("SELECT id,email FROM users WHERE role='Parent'")
-    parents = cursor.fetchall()
+    if request.method=="POST":
 
-    if request.method == "POST":
+        email=request.form["email"]
+        password=request.form["password"]
+        role=request.form["role"]
 
-        email = request.form["email"]
-        password = request.form["password"]
-        role = request.form["role"]
+        teacher_id=request.form.get("teacher_id")
+        parent_id=request.form.get("parent_id")
 
-        teacher_id = request.form.get("teacher_id") or None
-        parent_id = request.form.get("parent_id") or None
-
-        hashed_pw = bcrypt.generate_password_hash(password).decode("utf-8")
+        hashed=bcrypt.generate_password_hash(password).decode("utf-8")
 
         try:
 
-            if role == "Student":
+            if role=="Student":
 
-                cursor.execute("""
-                INSERT INTO users (email,password,role,teacher_id,parent_id)
-                VALUES (%s,%s,%s,%s,%s)
-                """,(email,hashed_pw,role,teacher_id,parent_id))
+                cur.execute("""
+                INSERT INTO users(email,password,role,teacher_id,parent_id)
+                VALUES(%s,%s,%s,%s,%s)
+                """,(email,hashed,role,teacher_id,parent_id))
 
             else:
 
-                cursor.execute("""
-                INSERT INTO users (email,password,role)
-                VALUES (%s,%s,%s)
-                """,(email,hashed_pw,role))
+                cur.execute("""
+                INSERT INTO users(email,password,role)
+                VALUES(%s,%s,%s)
+                """,(email,hashed,role))
 
             conn.commit()
 
-            cursor.close()
+            cur.close()
             conn.close()
 
-            return redirect(url_for("login"))
+            return redirect("/login")
 
         except Exception as e:
-
-            cursor.close()
-            conn.close()
 
             return render_template(
                 "register.html",
@@ -118,14 +109,7 @@ def register():
                 error=str(e)
             )
 
-    cursor.close()
-    conn.close()
-
-    return render_template(
-        "register.html",
-        teachers=teachers,
-        parents=parents
-    )
+    return render_template("register.html",teachers=teachers,parents=parents)
 
 
 # -----------------------------
@@ -134,35 +118,32 @@ def register():
 @app.route('/login',methods=["GET","POST"])
 def login():
 
-    if request.method == "POST":
+    if request.method=="POST":
 
-        email = request.form["email"]
-        password = request.form["password"]
+        email=request.form["email"]
+        password=request.form["password"]
 
-        conn = get_db_connection()
-        if conn is None:
-            return "Database connection failed"
+        conn=get_db_connection()
+        cur=conn.cursor(cursor_factory=RealDictCursor)
 
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-        cursor.execute(
-            "SELECT password,role FROM users WHERE email=%s",
-            (email,)
+        cur.execute(
+        "SELECT password,role FROM users WHERE email=%s",(email,)
         )
 
-        user = cursor.fetchone()
+        user=cur.fetchone()
 
-        cursor.close()
+        cur.close()
         conn.close()
 
         if user and bcrypt.check_password_hash(user["password"],password):
 
-            session["user"] = email
-            session["role"] = user["role"]
+            session["user"]=email
+            session["role"]=user["role"]
 
-            return redirect(url_for("dashboard"))
+            return redirect("/dashboard")
 
         else:
+
             return render_template("login.html",error="Invalid credentials")
 
     return render_template("login.html")
@@ -177,19 +158,52 @@ def dashboard():
     if "user" not in session:
         return redirect("/login")
 
-    role = session["role"]
+    role=session["role"]
 
-    if role == "Student":
-        return render_template("student_dashboard.html")
+    if role=="Student":
+        return render_template("student_dashboard.html",user=session["user"])
 
-    if role == "Teacher":
-        return render_template("teacher_dashboard.html")
+    if role=="Teacher":
+        return render_template("teacher_dashboard.html",user=session["user"])
 
-    if role == "Parent":
-        return render_template("parent_dashboard.html")
+    if role=="Parent":
+        return render_template("parent_dashboard.html",user=session["user"])
 
-    if role == "Admin":
-        return render_template("admin_dashboard.html")
+    if role=="Admin":
+        return render_template("admin_dashboard.html",user=session["user"])
+
+
+# -----------------------------
+# CREATE TEACHER
+# -----------------------------
+@app.route('/create_teacher',methods=["GET","POST"])
+def create_teacher():
+
+    if session.get("role")!="Admin":
+        return redirect("/dashboard")
+
+    if request.method=="POST":
+
+        email=request.form["email"]
+        password=request.form["password"]
+
+        hashed=bcrypt.generate_password_hash(password).decode("utf-8")
+
+        conn=get_db_connection()
+        cur=conn.cursor()
+
+        cur.execute("""
+        INSERT INTO users(email,password,role)
+        VALUES(%s,%s,'Teacher')
+        """,(email,hashed))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect("/dashboard")
+
+    return render_template("create_teacher.html")
 
 
 # -----------------------------
@@ -197,8 +211,18 @@ def dashboard():
 # -----------------------------
 @app.route('/logout')
 def logout():
+
     session.clear()
     return redirect("/login")
+
+
+# =================================================
+# START TEST
+# =================================================
+@app.route('/start_cognitive')
+def start_cognitive():
+
+    return redirect("/symbolic_test")
 
 
 # =================================================
@@ -206,8 +230,10 @@ def logout():
 # =================================================
 @app.route('/symbolic_test')
 def symbolic_test():
+
     session["symbolic_data"]=[]
     session["symbolic_trial"]=0
+
     return redirect("/symbolic_trial")
 
 
@@ -228,7 +254,12 @@ def symbolic_trial():
     session["left"]=left
     session["right"]=right
 
-    return render_template("symbolic_test.html",left=left,right=right,trial=trial+1)
+    return render_template(
+        "symbolic_test.html",
+        left=left,
+        right=right,
+        trial=trial+1
+    )
 
 
 @app.route('/submit_symbolic',methods=["POST"])
@@ -245,6 +276,7 @@ def submit_symbolic():
     correct_val=1 if choice==correct else 0
 
     session["symbolic_data"].append({"correct":correct_val,"rt":rt})
+
     session["symbolic_trial"]+=1
 
     return redirect("/symbolic_trial")
@@ -269,8 +301,10 @@ def finish_symbolic():
 # =================================================
 @app.route('/ans_test')
 def ans_test():
+
     session["ans_data"]=[]
     session["ans_trial"]=0
+
     return redirect("/ans_trial")
 
 
@@ -291,7 +325,12 @@ def ans_trial():
     session["ans_left"]=left
     session["ans_right"]=right
 
-    return render_template("ans_test.html",left=left,right=right,trial=trial+1)
+    return render_template(
+        "ans_test.html",
+        left=left,
+        right=right,
+        trial=trial+1
+    )
 
 
 @app.route('/submit_ans',methods=["POST"])
@@ -308,6 +347,7 @@ def submit_ans():
     correct_val=1 if choice==correct else 0
 
     session["ans_data"].append({"correct":correct_val,"rt":rt})
+
     session["ans_trial"]+=1
 
     return redirect("/ans_trial")
@@ -332,8 +372,10 @@ def finish_ans():
 # =================================================
 @app.route('/wm_test')
 def wm_test():
+
     session["wm_level"]=3
     session["wm_data"]=[]
+
     return redirect("/wm_trial")
 
 
@@ -343,15 +385,21 @@ def wm_trial():
     level=session["wm_level"]
 
     sequence=[str(random.randint(1,9)) for _ in range(level)]
+
     session["sequence"]=sequence
 
-    return render_template("wm_test.html",sequence=" ".join(sequence),level=level)
+    return render_template(
+        "wm_test.html",
+        sequence=" ".join(sequence),
+        level=level
+    )
 
 
 @app.route('/submit_wm',methods=["POST"])
 def submit_wm():
 
     answer=request.form.get("answer","").replace(" ","")
+
     correct_seq="".join(session["sequence"])
 
     correct=1 if answer==correct_seq else 0
@@ -359,9 +407,12 @@ def submit_wm():
     session["wm_data"].append({"level":session["wm_level"],"correct":correct})
 
     if correct:
+
         session["wm_level"]+=1
         return redirect("/wm_trial")
+
     else:
+
         return redirect("/finish_wm")
 
 
@@ -371,18 +422,19 @@ def finish_wm():
     data=session["wm_data"]
 
     scores=[d["level"] for d in data if d["correct"]==1]
+
     session["wm_K"]=max(scores) if scores else 0
 
     return redirect("/final_prediction")
 
 
+# =================================================
+# FINAL PREDICTION
+# =================================================
 @app.route('/final_prediction')
 def final_prediction():
 
-    if model is None or label_encoder is None:
-        return "Model not loaded"
-
-    features = np.array([[ 
+    features=np.array([[ 
         session["Mean_ACC_ANS"],
         session["Mean_RTs_ANS"],
         session["wm_K"],
@@ -390,27 +442,54 @@ def final_prediction():
         session["RTs_SymbolicComp"]
     ]])
 
-    prediction = model.predict(features)
+    prediction=model.predict(features)
+    label=label_encoder.inverse_transform(prediction)[0].lower()
 
-    label = label_encoder.inverse_transform(prediction)[0].lower()
+    if label in ["dd","severe","high"]:
 
-    # -----------------------------
-    # Convert model output to 4 levels
-    # -----------------------------
+        risk="Highest Risk"
 
-    if label in ["dd", "severe", "high"]:
-        risk = "Highest Risk"
+        recommendations="""
+Immediate professional assessment recommended.
+Use structured numeracy training.
+Provide visual math tools and manipulatives.
+Increase teacher supervision.
+"""
 
-    elif label in ["moderate", "medium"]:
-        risk = "Medium Risk"
+    elif label in ["moderate","medium"]:
 
-    elif label in ["mild", "low"]:
-        risk = "Lowest Risk"
+        risk="Medium Risk"
+
+        recommendations="""
+Provide additional practice.
+Use step-by-step math instruction.
+Monitor progress regularly.
+"""
+
+    elif label in ["mild","low"]:
+
+        risk="Lowest Risk"
+
+        recommendations="""
+Provide reinforcement activities.
+Encourage regular math exercises.
+"""
 
     else:
-        risk = "No Dyscalculia Detected"
 
-    return render_template("final_result.html", risk=risk)
+        risk="No Dyscalculia Detected"
 
-if __name__ == "__main__":
+        recommendations="""
+Continue normal learning activities.
+Maintain regular practice.
+"""
+
+    return render_template(
+        "final_result.html",
+        risk=risk,
+        recommendations=recommendations
+    )
+
+
+if __name__=="__main__":
     app.run()
