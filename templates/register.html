@@ -22,7 +22,9 @@
             <h2>Register</h2>
 
             {% if error %}
-            <p style="color: red; font-weight: bold; text-align: center;">{{ error }}</p>
+            <p style="color:red;font-weight:bold;text-align:center;">
+                {{ error }}
+            </p>
             {% endif %}
 
             <form method="POST">
@@ -40,7 +42,7 @@
                 <div class="form-group">
                     <label>Select Role</label>
 
-                    <select name="role">
+                    <select name="role" required>
 
                         <option value="">Select Role</option>
                         <option value="Student">Student</option>
@@ -49,39 +51,41 @@
 
                     </select>
 
-                    <br><br>
+                </div>
 
-                    <label>Assign Teacher</label>
+                <br>
 
-                    <select name="teacher_id">
+                <label>Assign Teacher</label>
 
-                        {% for t in teachers %}
+                <select name="teacher_id">
 
-                        <option value="{{ t['id'] }}">{{ t['email'] }}</option>
+                    <option value="">None</option>
 
-                        {% endfor %}
+                    {% for t in teachers %}
+                    <option value="{{ t.id }}">{{ t.email }}</option>
+                    {% endfor %}
 
-                    </select>
+                </select>
 
-                    <br><br>
+                <br><br>
 
-                    <label>Assign Parent</label>
+                <label>Assign Parent</label>
 
-                    <select name="parent_id">
+                <select name="parent_id">
 
-                        {% for p in parents %}
+                    <option value="">None</option>
 
-                        <option value="{{ p['id'] }}">{{ p['email'] }}</option>
+                    {% for p in parents %}
+                    <option value="{{ p.id }}">{{ p.email }}</option>
+                    {% endfor %}
 
-                        {% endfor %}
+                </select>
 
-                    </select>
+                <br><br>
 
-                    <br>
-
-                    <button class="btn btn-primary" type="submit">
-                        Register
-                    </button>
+                <button class="btn btn-primary" type="submit">
+                    Register
+                </button>
 
             </form>
 

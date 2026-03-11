@@ -14,12 +14,18 @@ bcrypt = Bcrypt(app)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+
+# ------------------------------------------------
+# DATABASE CONNECTION
+# ------------------------------------------------
+
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
-# -----------------------------
+
+# ------------------------------------------------
 # LOAD ML MODEL
-# -----------------------------
+# ------------------------------------------------
 
 model = None
 label_encoder = None
@@ -30,9 +36,10 @@ try:
 except Exception as e:
     print("Model loading error:", e)
 
-# -----------------------------
+
+# ------------------------------------------------
 # HOME
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/')
 def home():
@@ -40,9 +47,10 @@ def home():
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
-# -----------------------------
+
+# ------------------------------------------------
 # REGISTER
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -62,20 +70,22 @@ def register():
         password = request.form["password"]
         role = request.form["role"]
 
-        teacher_id = request.form.get("teacher_id")
-        parent_id = request.form.get("parent_id")
+        teacher_id = request.form.get("teacher_id") or None
+        parent_id = request.form.get("parent_id") or None
 
         hashed_pw = bcrypt.generate_password_hash(password).decode("utf-8")
 
         try:
 
             if role == "Student":
+
                 cursor.execute("""
                 INSERT INTO users (email,password,role,teacher_id,parent_id)
                 VALUES (%s,%s,%s,%s,%s)
                 """,(email,hashed_pw,role,teacher_id,parent_id))
 
             else:
+
                 cursor.execute("""
                 INSERT INTO users (email,password,role)
                 VALUES (%s,%s,%s)
@@ -103,11 +113,16 @@ def register():
     cursor.close()
     conn.close()
 
-    return render_template("register.html",teachers=teachers,parents=parents)
+    return render_template(
+        "register.html",
+        teachers=teachers,
+        parents=parents
+    )
 
-# -----------------------------
+
+# ------------------------------------------------
 # LOGIN
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/login',methods=["GET","POST"])
 def login():
@@ -142,9 +157,10 @@ def login():
 
     return render_template("login.html")
 
-# -----------------------------
+
+# ------------------------------------------------
 # DASHBOARD
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/dashboard')
 def dashboard():
@@ -166,14 +182,16 @@ def dashboard():
     if role == "Admin":
         return render_template("admin_dashboard.html")
 
-# -----------------------------
+
+# ------------------------------------------------
 # LOGOUT
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect("/login")
+
 
 # =================================================
 # SYMBOLIC TEST
@@ -184,6 +202,7 @@ def symbolic_test():
     session["symbolic_data"]=[]
     session["symbolic_trial"]=0
     return redirect("/symbolic_trial")
+
 
 @app.route('/symbolic_trial')
 def symbolic_trial():
@@ -204,6 +223,7 @@ def symbolic_trial():
 
     return render_template("symbolic_test.html",left=left,right=right,trial=trial+1)
 
+
 @app.route('/submit_symbolic',methods=["POST"])
 def submit_symbolic():
 
@@ -222,6 +242,7 @@ def submit_symbolic():
 
     return redirect("/symbolic_trial")
 
+
 @app.route('/finish_symbolic')
 def finish_symbolic():
 
@@ -235,6 +256,7 @@ def finish_symbolic():
 
     return redirect("/ans_test")
 
+
 # =================================================
 # ANS TEST
 # =================================================
@@ -244,6 +266,7 @@ def ans_test():
     session["ans_data"]=[]
     session["ans_trial"]=0
     return redirect("/ans_trial")
+
 
 @app.route('/ans_trial')
 def ans_trial():
@@ -264,6 +287,7 @@ def ans_trial():
 
     return render_template("ans_test.html",left=left,right=right,trial=trial+1)
 
+
 @app.route('/submit_ans',methods=["POST"])
 def submit_ans():
 
@@ -282,6 +306,7 @@ def submit_ans():
 
     return redirect("/ans_trial")
 
+
 @app.route('/finish_ans')
 def finish_ans():
 
@@ -295,6 +320,7 @@ def finish_ans():
 
     return redirect("/wm_test")
 
+
 # =================================================
 # WORKING MEMORY TEST
 # =================================================
@@ -305,6 +331,7 @@ def wm_test():
     session["wm_data"]=[]
     return redirect("/wm_trial")
 
+
 @app.route('/wm_trial')
 def wm_trial():
 
@@ -314,6 +341,7 @@ def wm_trial():
     session["sequence"]=sequence
 
     return render_template("wm_test.html",sequence=" ".join(sequence),level=level)
+
 
 @app.route('/submit_wm',methods=["POST"])
 def submit_wm():
@@ -331,6 +359,7 @@ def submit_wm():
     else:
         return redirect("/finish_wm")
 
+
 @app.route('/finish_wm')
 def finish_wm():
 
@@ -340,6 +369,7 @@ def finish_wm():
     session["wm_K"]=max(scores) if scores else 0
 
     return redirect("/final_prediction")
+
 
 # =================================================
 # FINAL PREDICTION
@@ -360,6 +390,11 @@ def final_prediction():
     risk=label_encoder.inverse_transform(prediction)[0]
 
     return render_template("final_result.html",risk=risk)
+
+
+# ------------------------------------------------
+# RUN APP
+# ------------------------------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)
