@@ -1,32 +1,29 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_bcrypt import Bcrypt
-from flask_mysqldb import MySQL
 import random
 import pickle
 import numpy as np
 import os
-import MySQLdb
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
 
 bcrypt = Bcrypt(app)
 
-# -----------------------------
-# MYSQL CONFIG (Render Compatible)
-# -----------------------------
+# ------------------------------------------------
+# SUPABASE DATABASE CONNECTION
+# ------------------------------------------------
 
-app.config['MYSQL_HOST'] = os.getenv("MYSQL_HOST", "localhost")
-app.config['MYSQL_USER'] = os.getenv("MYSQL_USER", "root")
-app.config['MYSQL_PASSWORD'] = os.getenv("MYSQL_PASSWORD", "")
-app.config['MYSQL_DB'] = os.getenv("MYSQL_DB", "dyscalculia_db")
-app.config['MYSQL_PORT'] = int(os.getenv("MYSQL_PORT", 3306))
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-mysql = MySQL(app)
+conn = psycopg2.connect(DATABASE_URL)
+cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-# -----------------------------
+# ------------------------------------------------
 # LOAD ML MODEL
-# -----------------------------
+# ------------------------------------------------
 
 model = None
 label_encoder = None
@@ -40,9 +37,9 @@ try:
 except Exception as e:
     print("Model loading error:", e)
 
-# -----------------------------
+# ------------------------------------------------
 # HOME
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/')
 def home():
@@ -50,20 +47,18 @@ def home():
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
-# -----------------------------
+# ------------------------------------------------
 # REGISTER
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/register', methods=['GET','POST'])
 def register():
 
-    cur = mysql.connection.cursor()
+    cursor.execute("SELECT id,email FROM users WHERE role='Teacher'")
+    teachers = cursor.fetchall()
 
-    cur.execute("SELECT id,email FROM users WHERE role='Teacher'")
-    teachers = cur.fetchall()
-
-    cur.execute("SELECT id,email FROM users WHERE role='Parent'")
-    parents = cur.fetchall()
+    cursor.execute("SELECT id,email FROM users WHERE role='Parent'")
+    parents = cursor.fetchall()
 
     if request.method == "POST":
 
@@ -77,30 +72,36 @@ def register():
         hashed_pw = bcrypt.generate_password_hash(password).decode("utf-8")
 
         try:
+
             if role == "Student":
-                cur.execute("""
+                cursor.execute("""
                 INSERT INTO users (email,password,role,teacher_id,parent_id)
                 VALUES (%s,%s,%s,%s,%s)
                 """,(email,hashed_pw,role,teacher_id,parent_id))
+
             else:
-                cur.execute("""
+                cursor.execute("""
                 INSERT INTO users (email,password,role)
                 VALUES (%s,%s,%s)
                 """,(email,hashed_pw,role))
 
-            mysql.connection.commit()
+            conn.commit()
+
             return redirect(url_for("login"))
 
-        except MySQLdb.IntegrityError:
-            return render_template("register.html",teachers=teachers,parents=parents,error="Email already exists")
         except Exception as e:
-            return render_template("register.html",teachers=teachers,parents=parents,error=str(e))
+            return render_template("register.html",
+            teachers=teachers,
+            parents=parents,
+            error=str(e))
 
-    return render_template("register.html",teachers=teachers,parents=parents)
+    return render_template("register.html",
+        teachers=teachers,
+        parents=parents)
 
-# -----------------------------
+# ------------------------------------------------
 # LOGIN
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/login',methods=["GET","POST"])
 def login():
@@ -111,17 +112,21 @@ def login():
         password = request.form["password"]
 
         try:
-            cur = mysql.connection.cursor()
-            cur.execute("SELECT password,role FROM users WHERE email=%s",(email,))
-            user = cur.fetchone()
-            cur.close()
-        except Exception as e:
-            return render_template("login.html",error="Database error: "+str(e))
 
-        if user and bcrypt.check_password_hash(user[0],password):
+            cursor.execute(
+                "SELECT password,role FROM users WHERE email=%s",
+                (email,)
+            )
+
+            user = cursor.fetchone()
+
+        except Exception as e:
+            return render_template("login.html",error=str(e))
+
+        if user and bcrypt.check_password_hash(user["password"],password):
 
             session["user"] = email
-            session["role"] = user[1]
+            session["role"] = user["role"]
 
             return redirect(url_for("dashboard"))
 
@@ -130,9 +135,9 @@ def login():
 
     return render_template("login.html")
 
-# -----------------------------
+# ------------------------------------------------
 # DASHBOARD
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/dashboard')
 def dashboard():
@@ -154,18 +159,18 @@ def dashboard():
     if role == "Admin":
         return render_template("admin_dashboard.html")
 
-# -----------------------------
+# ------------------------------------------------
 # LOGOUT
-# -----------------------------
+# ------------------------------------------------
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect("/login")
 
-# =========================================================
+# =================================================
 # SYMBOLIC TEST
-# =========================================================
+# =================================================
 
 @app.route('/symbolic_test')
 def symbolic_test():
@@ -224,9 +229,9 @@ def finish_symbolic():
 
     return redirect("/ans_test")
 
-# =========================================================
+# =================================================
 # ANS TEST
-# =========================================================
+# =================================================
 
 @app.route('/ans_test')
 def ans_test():
@@ -285,9 +290,9 @@ def finish_ans():
 
     return redirect("/wm_test")
 
-# =========================================================
+# =================================================
 # WORKING MEMORY TEST
-# =========================================================
+# =================================================
 
 @app.route('/wm_test')
 def wm_test():
@@ -333,9 +338,9 @@ def finish_wm():
 
     return redirect("/final_prediction")
 
-# =========================================================
+# =================================================
 # FINAL PREDICTION
-# =========================================================
+# =================================================
 
 @app.route('/final_prediction')
 def final_prediction():
@@ -356,9 +361,9 @@ def final_prediction():
 
     return render_template("final_result.html",risk=risk)
 
-# -----------------------------
+# ------------------------------------------------
 # RUN APP
-# -----------------------------
+# ------------------------------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)

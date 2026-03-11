@@ -1,8 +1,8 @@
-flask
+Flask
 gunicorn
 numpy
 pandas
 scikit-learn
 joblib
 flask-bcrypt
-flask-mysqldb
+psycopg2-binary
