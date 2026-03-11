@@ -376,13 +376,13 @@ def finish_wm():
     return redirect("/final_prediction")
 
 
-# =================================================
-# FINAL PREDICTION
-# =================================================
 @app.route('/final_prediction')
 def final_prediction():
 
-    features=np.array([[ 
+    if model is None or label_encoder is None:
+        return "Model not loaded"
+
+    features = np.array([[ 
         session["Mean_ACC_ANS"],
         session["Mean_RTs_ANS"],
         session["wm_K"],
@@ -390,11 +390,27 @@ def final_prediction():
         session["RTs_SymbolicComp"]
     ]])
 
-    prediction=model.predict(features)
-    risk=label_encoder.inverse_transform(prediction)[0]
+    prediction = model.predict(features)
 
-    return render_template("final_result.html",risk=risk)
+    label = label_encoder.inverse_transform(prediction)[0].lower()
 
+    # -----------------------------
+    # Convert model output to 4 levels
+    # -----------------------------
+
+    if label in ["dd", "severe", "high"]:
+        risk = "Highest Risk"
+
+    elif label in ["moderate", "medium"]:
+        risk = "Medium Risk"
+
+    elif label in ["mild", "low"]:
+        risk = "Lowest Risk"
+
+    else:
+        risk = "No Dyscalculia Detected"
+
+    return render_template("final_result.html", risk=risk)
 
 if __name__ == "__main__":
     app.run()
