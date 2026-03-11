@@ -3,101 +3,99 @@
 
 <head>
 
-<title>Register</title>
+    <title>Register</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
 <body>
 
-<div class="navbar">
-Dyscalculia Detection System
-</div>
+    <div class="navbar">
+        Dyscalculia Detection System
+    </div>
 
-<div class="container">
+    <div class="container">
 
-<div class="card center">
+        <div class="card center">
 
-<h2>Register</h2>
+            <h2>Register</h2>
 
-{% if error %}
-<p style="color: red; font-weight: bold; text-align: center;">{{ error }}</p>
-{% endif %}
+            {% if error %}
+            <p style="color: red; font-weight: bold; text-align: center;">{{ error }}</p>
+            {% endif %}
 
-<form method="post">
+            <form method="POST">
 
-<div class="form-group">
-<label>Email</label>
-<input name="email" placeholder="Enter Email" required>
-</div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input name="email" placeholder="Enter Email" required>
+                </div>
 
-<div class="form-group">
-<label>Password</label>
-<input type="password" name="password" placeholder="Enter Password" required>
-</div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="Enter Password" required>
+                </div>
 
-<div class="form-group">
-<label>Select Role</label>
+                <div class="form-group">
+                    <label>Select Role</label>
 
-<select name="role">
+                    <select name="role">
 
-<option value="">Select Role</option>
+                        <option value="">Select Role</option>
+                        <option value="Student">Student</option>
+                        <option value="Teacher">Teacher</option>
+                        <option value="Parent">Parent</option>
 
-<option value="Student">Student</option>
+                    </select>
 
-<option value="Teacher">Teacher</option>
+                    <br><br>
 
-<option value="Parent">Parent</option>
+                    <label>Assign Teacher</label>
 
-</select>
+                    <select name="teacher_id">
 
-<br><br>
+                        {% for t in teachers %}
 
-<label>Assign Teacher</label>
+                        <option value="{{ t['id'] }}">{{ t['email'] }}</option>
 
-<select name="teacher_id">
+                        {% endfor %}
 
-{% for t in teachers %}
+                    </select>
 
-<option value="{{ t[0] }}">{{ t[1] }}</option>
+                    <br><br>
 
-{% endfor %}
+                    <label>Assign Parent</label>
 
-</select>
+                    <select name="parent_id">
 
-<br><br>
+                        {% for p in parents %}
 
-<label>Assign Parent</label>
+                        <option value="{{ p['id'] }}">{{ p['email'] }}</option>
 
-<select name="parent_id">
+                        {% endfor %}
 
-{% for p in parents %}
+                    </select>
 
-<option value="{{ p[0] }}">{{ p[1] }}</option>
+                    <br>
 
-{% endfor %}
+                    <button class="btn btn-primary" type="submit">
+                        Register
+                    </button>
 
-</select>
+            </form>
 
-<br>
+            <br>
 
-<button class="btn btn-primary" type="submit">
-Register
-</button>
+            <p>
+                Already have an account?
+                <a href="/login">Login here</a>
+            </p>
 
-</form>
+        </div>
 
-<br>
-
-<p>
-Already have an account?
-<a href="/login">Login here</a>
-</p>
- 
-</div>
-
-</div>
+    </div>
 
 </body>
+
 </html>

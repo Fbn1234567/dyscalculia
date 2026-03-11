@@ -12,16 +12,10 @@ app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
 
 bcrypt = Bcrypt(app)
 
-# -----------------------------
-# DATABASE CONNECTION
-# -----------------------------
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
-
+    return psycopg2.connect(DATABASE_URL)
 
 # -----------------------------
 # LOAD ML MODEL
@@ -31,14 +25,10 @@ model = None
 label_encoder = None
 
 try:
-    if os.path.exists("model.pkl") and os.path.exists("label_encoder.pkl"):
-        model = pickle.load(open("model.pkl", "rb"))
-        label_encoder = pickle.load(open("label_encoder.pkl", "rb"))
-    else:
-        print("Model files not found.")
+    model = pickle.load(open("model.pkl", "rb"))
+    label_encoder = pickle.load(open("label_encoder.pkl", "rb"))
 except Exception as e:
     print("Model loading error:", e)
-
 
 # -----------------------------
 # HOME
@@ -49,7 +39,6 @@ def home():
     if "user" in session:
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
-
 
 # -----------------------------
 # REGISTER
@@ -93,20 +82,28 @@ def register():
                 """,(email,hashed_pw,role))
 
             conn.commit()
+
+            cursor.close()
             conn.close()
 
             return redirect(url_for("login"))
 
         except Exception as e:
+
+            cursor.close()
             conn.close()
-            return render_template("register.html",
-                                   teachers=teachers,
-                                   parents=parents,
-                                   error=str(e))
 
+            return render_template(
+                "register.html",
+                teachers=teachers,
+                parents=parents,
+                error=str(e)
+            )
+
+    cursor.close()
     conn.close()
-    return render_template("register.html",teachers=teachers,parents=parents)
 
+    return render_template("register.html",teachers=teachers,parents=parents)
 
 # -----------------------------
 # LOGIN
@@ -120,21 +117,18 @@ def login():
         email = request.form["email"]
         password = request.form["password"]
 
-        try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-            conn = get_db_connection()
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            "SELECT password,role FROM users WHERE email=%s",
+            (email,)
+        )
 
-            cursor.execute(
-                "SELECT password,role FROM users WHERE email=%s",
-                (email,)
-            )
+        user = cursor.fetchone()
 
-            user = cursor.fetchone()
-            conn.close()
-
-        except Exception as e:
-            return render_template("login.html",error=str(e))
+        cursor.close()
+        conn.close()
 
         if user and bcrypt.check_password_hash(user["password"],password):
 
@@ -147,7 +141,6 @@ def login():
             return render_template("login.html",error="Invalid credentials")
 
     return render_template("login.html")
-
 
 # -----------------------------
 # DASHBOARD
@@ -173,7 +166,6 @@ def dashboard():
     if role == "Admin":
         return render_template("admin_dashboard.html")
 
-
 # -----------------------------
 # LOGOUT
 # -----------------------------
@@ -182,7 +174,6 @@ def dashboard():
 def logout():
     session.clear()
     return redirect("/login")
-
 
 # =================================================
 # SYMBOLIC TEST
@@ -193,7 +184,6 @@ def symbolic_test():
     session["symbolic_data"]=[]
     session["symbolic_trial"]=0
     return redirect("/symbolic_trial")
-
 
 @app.route('/symbolic_trial')
 def symbolic_trial():
@@ -214,7 +204,6 @@ def symbolic_trial():
 
     return render_template("symbolic_test.html",left=left,right=right,trial=trial+1)
 
-
 @app.route('/submit_symbolic',methods=["POST"])
 def submit_symbolic():
 
@@ -233,7 +222,6 @@ def submit_symbolic():
 
     return redirect("/symbolic_trial")
 
-
 @app.route('/finish_symbolic')
 def finish_symbolic():
 
@@ -247,7 +235,6 @@ def finish_symbolic():
 
     return redirect("/ans_test")
 
-
 # =================================================
 # ANS TEST
 # =================================================
@@ -257,7 +244,6 @@ def ans_test():
     session["ans_data"]=[]
     session["ans_trial"]=0
     return redirect("/ans_trial")
-
 
 @app.route('/ans_trial')
 def ans_trial():
@@ -278,7 +264,6 @@ def ans_trial():
 
     return render_template("ans_test.html",left=left,right=right,trial=trial+1)
 
-
 @app.route('/submit_ans',methods=["POST"])
 def submit_ans():
 
@@ -297,7 +282,6 @@ def submit_ans():
 
     return redirect("/ans_trial")
 
-
 @app.route('/finish_ans')
 def finish_ans():
 
@@ -311,7 +295,6 @@ def finish_ans():
 
     return redirect("/wm_test")
 
-
 # =================================================
 # WORKING MEMORY TEST
 # =================================================
@@ -322,7 +305,6 @@ def wm_test():
     session["wm_data"]=[]
     return redirect("/wm_trial")
 
-
 @app.route('/wm_trial')
 def wm_trial():
 
@@ -332,7 +314,6 @@ def wm_trial():
     session["sequence"]=sequence
 
     return render_template("wm_test.html",sequence=" ".join(sequence),level=level)
-
 
 @app.route('/submit_wm',methods=["POST"])
 def submit_wm():
@@ -350,7 +331,6 @@ def submit_wm():
     else:
         return redirect("/finish_wm")
 
-
 @app.route('/finish_wm')
 def finish_wm():
 
@@ -361,16 +341,12 @@ def finish_wm():
 
     return redirect("/final_prediction")
 
-
 # =================================================
 # FINAL PREDICTION
 # =================================================
 
 @app.route('/final_prediction')
 def final_prediction():
-
-    if model is None or label_encoder is None:
-        return "Model not loaded"
 
     features=np.array([[ 
         session["Mean_ACC_ANS"],
@@ -384,11 +360,6 @@ def final_prediction():
     risk=label_encoder.inverse_transform(prediction)[0]
 
     return render_template("final_result.html",risk=risk)
-
-
-# -----------------------------
-# RUN APP
-# -----------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)
