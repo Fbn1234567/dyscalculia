@@ -15,32 +15,38 @@ bcrypt = Bcrypt(app)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
-# ------------------------------------------------
+# -----------------------------
 # DATABASE CONNECTION
-# ------------------------------------------------
-
+# -----------------------------
 def get_db_connection():
-    return psycopg2.connect(DATABASE_URL)
+    try:
+        conn = psycopg2.connect(
+            DATABASE_URL,
+            sslmode="require"   # REQUIRED for Supabase
+        )
+        return conn
+    except Exception as e:
+        print("Database connection error:", e)
+        return None
 
 
-# ------------------------------------------------
+# -----------------------------
 # LOAD ML MODEL
-# ------------------------------------------------
-
+# -----------------------------
 model = None
 label_encoder = None
 
 try:
     model = pickle.load(open("model.pkl", "rb"))
     label_encoder = pickle.load(open("label_encoder.pkl", "rb"))
+    print("Model loaded successfully")
 except Exception as e:
     print("Model loading error:", e)
 
 
-# ------------------------------------------------
+# -----------------------------
 # HOME
-# ------------------------------------------------
-
+# -----------------------------
 @app.route('/')
 def home():
     if "user" in session:
@@ -48,14 +54,16 @@ def home():
     return redirect(url_for("login"))
 
 
-# ------------------------------------------------
+# -----------------------------
 # REGISTER
-# ------------------------------------------------
-
-@app.route('/register', methods=['GET','POST'])
+# -----------------------------
+@app.route('/register', methods=['GET', 'POST'])
 def register():
 
     conn = get_db_connection()
+    if conn is None:
+        return "Database connection failed"
+
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     cursor.execute("SELECT id,email FROM users WHERE role='Teacher'")
@@ -120,10 +128,9 @@ def register():
     )
 
 
-# ------------------------------------------------
+# -----------------------------
 # LOGIN
-# ------------------------------------------------
-
+# -----------------------------
 @app.route('/login',methods=["GET","POST"])
 def login():
 
@@ -133,6 +140,9 @@ def login():
         password = request.form["password"]
 
         conn = get_db_connection()
+        if conn is None:
+            return "Database connection failed"
+
         cursor = conn.cursor(cursor_factory=RealDictCursor)
 
         cursor.execute(
@@ -158,10 +168,9 @@ def login():
     return render_template("login.html")
 
 
-# ------------------------------------------------
+# -----------------------------
 # DASHBOARD
-# ------------------------------------------------
-
+# -----------------------------
 @app.route('/dashboard')
 def dashboard():
 
@@ -183,10 +192,9 @@ def dashboard():
         return render_template("admin_dashboard.html")
 
 
-# ------------------------------------------------
+# -----------------------------
 # LOGOUT
-# ------------------------------------------------
-
+# -----------------------------
 @app.route('/logout')
 def logout():
     session.clear()
@@ -196,7 +204,6 @@ def logout():
 # =================================================
 # SYMBOLIC TEST
 # =================================================
-
 @app.route('/symbolic_test')
 def symbolic_test():
     session["symbolic_data"]=[]
@@ -260,7 +267,6 @@ def finish_symbolic():
 # =================================================
 # ANS TEST
 # =================================================
-
 @app.route('/ans_test')
 def ans_test():
     session["ans_data"]=[]
@@ -324,7 +330,6 @@ def finish_ans():
 # =================================================
 # WORKING MEMORY TEST
 # =================================================
-
 @app.route('/wm_test')
 def wm_test():
     session["wm_level"]=3
@@ -374,7 +379,6 @@ def finish_wm():
 # =================================================
 # FINAL PREDICTION
 # =================================================
-
 @app.route('/final_prediction')
 def final_prediction():
 
@@ -392,9 +396,5 @@ def final_prediction():
     return render_template("final_result.html",risk=risk)
 
 
-# ------------------------------------------------
-# RUN APP
-# ------------------------------------------------
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
