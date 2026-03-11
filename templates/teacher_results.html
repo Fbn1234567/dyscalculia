@@ -2,8 +2,10 @@
 <html>
 
 <head>
+
     <title>Student Results</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
@@ -16,7 +18,7 @@
 
         <div class="card">
 
-            <h2>All Student Results</h2>
+            <h2>Student Assessment Results</h2>
 
             <table>
 
@@ -26,17 +28,31 @@
                     <th>Date</th>
                 </tr>
 
-                {% for row in results %}
+                {% for r in results %}
 
                 <tr>
 
-                    <td>{{ row[0] }}</td>
+                    <td>{{ r.student_email }}</td>
 
                     <td>
-                        <b>{{ row[1] }}</b>
+
+                        {% if r.risk_level == "Highest Risk" %}
+                        <span class="risk-high">Highest Risk</span>
+
+                        {% elif r.risk_level == "Medium Risk" %}
+                        <span class="risk-medium">Medium Risk</span>
+
+                        {% elif r.risk_level == "Lowest Risk" %}
+                        <span class="risk-low">Lowest Risk</span>
+
+                        {% else %}
+                        <span class="risk-none">No Dyscalculia Detected</span>
+
+                        {% endif %}
+
                     </td>
 
-                    <td>{{ row[2] }}</td>
+                    <td>{{ r.created_at }}</td>
 
                 </tr>
 
@@ -47,7 +63,7 @@
             <br>
 
             <a href="/dashboard" class="btn btn-primary">
-                Back to Dashboard
+                Back
             </a>
 
         </div>
