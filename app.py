@@ -12,18 +12,20 @@ app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
 
 bcrypt = Bcrypt(app)
 
-# ------------------------------------------------
-# SUPABASE DATABASE CONNECTION
-# ------------------------------------------------
+# -----------------------------
+# DATABASE CONNECTION
+# -----------------------------
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-conn = psycopg2.connect(DATABASE_URL)
-cursor = conn.cursor(cursor_factory=RealDictCursor)
+def get_db_connection():
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
-# ------------------------------------------------
+
+# -----------------------------
 # LOAD ML MODEL
-# ------------------------------------------------
+# -----------------------------
 
 model = None
 label_encoder = None
@@ -37,9 +39,10 @@ try:
 except Exception as e:
     print("Model loading error:", e)
 
-# ------------------------------------------------
+
+# -----------------------------
 # HOME
-# ------------------------------------------------
+# -----------------------------
 
 @app.route('/')
 def home():
@@ -47,12 +50,16 @@ def home():
         return redirect(url_for("dashboard"))
     return redirect(url_for("login"))
 
-# ------------------------------------------------
+
+# -----------------------------
 # REGISTER
-# ------------------------------------------------
+# -----------------------------
 
 @app.route('/register', methods=['GET','POST'])
 def register():
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     cursor.execute("SELECT id,email FROM users WHERE role='Teacher'")
     teachers = cursor.fetchall()
@@ -86,22 +93,24 @@ def register():
                 """,(email,hashed_pw,role))
 
             conn.commit()
+            conn.close()
 
             return redirect(url_for("login"))
 
         except Exception as e:
+            conn.close()
             return render_template("register.html",
-            teachers=teachers,
-            parents=parents,
-            error=str(e))
+                                   teachers=teachers,
+                                   parents=parents,
+                                   error=str(e))
 
-    return render_template("register.html",
-        teachers=teachers,
-        parents=parents)
+    conn.close()
+    return render_template("register.html",teachers=teachers,parents=parents)
 
-# ------------------------------------------------
+
+# -----------------------------
 # LOGIN
-# ------------------------------------------------
+# -----------------------------
 
 @app.route('/login',methods=["GET","POST"])
 def login():
@@ -113,12 +122,16 @@ def login():
 
         try:
 
+            conn = get_db_connection()
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+
             cursor.execute(
                 "SELECT password,role FROM users WHERE email=%s",
                 (email,)
             )
 
             user = cursor.fetchone()
+            conn.close()
 
         except Exception as e:
             return render_template("login.html",error=str(e))
@@ -135,9 +148,10 @@ def login():
 
     return render_template("login.html")
 
-# ------------------------------------------------
+
+# -----------------------------
 # DASHBOARD
-# ------------------------------------------------
+# -----------------------------
 
 @app.route('/dashboard')
 def dashboard():
@@ -159,14 +173,16 @@ def dashboard():
     if role == "Admin":
         return render_template("admin_dashboard.html")
 
-# ------------------------------------------------
+
+# -----------------------------
 # LOGOUT
-# ------------------------------------------------
+# -----------------------------
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect("/login")
+
 
 # =================================================
 # SYMBOLIC TEST
@@ -177,6 +193,7 @@ def symbolic_test():
     session["symbolic_data"]=[]
     session["symbolic_trial"]=0
     return redirect("/symbolic_trial")
+
 
 @app.route('/symbolic_trial')
 def symbolic_trial():
@@ -197,6 +214,7 @@ def symbolic_trial():
 
     return render_template("symbolic_test.html",left=left,right=right,trial=trial+1)
 
+
 @app.route('/submit_symbolic',methods=["POST"])
 def submit_symbolic():
 
@@ -211,10 +229,10 @@ def submit_symbolic():
     correct_val=1 if choice==correct else 0
 
     session["symbolic_data"].append({"correct":correct_val,"rt":rt})
-
     session["symbolic_trial"]+=1
 
     return redirect("/symbolic_trial")
+
 
 @app.route('/finish_symbolic')
 def finish_symbolic():
@@ -229,6 +247,7 @@ def finish_symbolic():
 
     return redirect("/ans_test")
 
+
 # =================================================
 # ANS TEST
 # =================================================
@@ -238,6 +257,7 @@ def ans_test():
     session["ans_data"]=[]
     session["ans_trial"]=0
     return redirect("/ans_trial")
+
 
 @app.route('/ans_trial')
 def ans_trial():
@@ -258,6 +278,7 @@ def ans_trial():
 
     return render_template("ans_test.html",left=left,right=right,trial=trial+1)
 
+
 @app.route('/submit_ans',methods=["POST"])
 def submit_ans():
 
@@ -272,10 +293,10 @@ def submit_ans():
     correct_val=1 if choice==correct else 0
 
     session["ans_data"].append({"correct":correct_val,"rt":rt})
-
     session["ans_trial"]+=1
 
     return redirect("/ans_trial")
+
 
 @app.route('/finish_ans')
 def finish_ans():
@@ -290,6 +311,7 @@ def finish_ans():
 
     return redirect("/wm_test")
 
+
 # =================================================
 # WORKING MEMORY TEST
 # =================================================
@@ -300,16 +322,17 @@ def wm_test():
     session["wm_data"]=[]
     return redirect("/wm_trial")
 
+
 @app.route('/wm_trial')
 def wm_trial():
 
     level=session["wm_level"]
 
     sequence=[str(random.randint(1,9)) for _ in range(level)]
-
     session["sequence"]=sequence
 
     return render_template("wm_test.html",sequence=" ".join(sequence),level=level)
+
 
 @app.route('/submit_wm',methods=["POST"])
 def submit_wm():
@@ -327,16 +350,17 @@ def submit_wm():
     else:
         return redirect("/finish_wm")
 
+
 @app.route('/finish_wm')
 def finish_wm():
 
     data=session["wm_data"]
 
     scores=[d["level"] for d in data if d["correct"]==1]
-
     session["wm_K"]=max(scores) if scores else 0
 
     return redirect("/final_prediction")
+
 
 # =================================================
 # FINAL PREDICTION
@@ -361,9 +385,10 @@ def final_prediction():
 
     return render_template("final_result.html",risk=risk)
 
-# ------------------------------------------------
+
+# -----------------------------
 # RUN APP
-# ------------------------------------------------
+# -----------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)
