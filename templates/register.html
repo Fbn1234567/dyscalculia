@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Register</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="navbar">
+Dyscalculia Detection System
+</div>
+
+<div class="container">
+
+<div class="card center">
+
+<h2>Register</h2>
+
+{% if error %}
+<p style="color: red; font-weight: bold; text-align: center;">{{ error }}</p>
+{% endif %}
+
+<form method="post">
+
+<div class="form-group">
+<label>Email</label>
+<input name="email" placeholder="Enter Email" required>
+</div>
+
+<div class="form-group">
+<label>Password</label>
+<input type="password" name="password" placeholder="Enter Password" required>
+</div>
+
+<div class="form-group">
+<label>Select Role</label>
+
+<select name="role">
+
+<option value="">Select Role</option>
+
+<option value="Student">Student</option>
+
+<option value="Teacher">Teacher</option>
+
+<option value="Parent">Parent</option>
+
+</select>
+
+<br><br>
+
+<label>Assign Teacher</label>
+
+<select name="teacher_id">
+
+{% for t in teachers %}
+
+<option value="{{ t[0] }}">{{ t[1] }}</option>
+
+{% endfor %}
+
+</select>
+
+<br><br>
+
+<label>Assign Parent</label>
+
+<select name="parent_id">
+
+{% for p in parents %}
+
+<option value="{{ p[0] }}">{{ p[1] }}</option>
+
+{% endfor %}
+
+</select>
+
+<br>
+
+<button class="btn btn-primary" type="submit">
+Register
+</button>
+
+</form>
+
+<br>
+
+<p>
+Already have an account?
+<a href="/login">Login here</a>
+</p>
+ 
+</div>
+
+</div>
+
+</body>
+</html>

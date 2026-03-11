@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Student Results</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="navbar">
+Dyscalculia Detection System
+</div>
+
+<div class="container">
+
+<div class="card">
+
+<h2>All Student Results</h2>
+
+<table>
+
+<tr>
+<th>Student</th>
+<th>Risk Level</th>
+<th>Date</th>
+</tr>
+
+{% for row in results %}
+<tr>
+<td>{{ row[0] }}</td>
+<td><b>{{ row[1] }}</b></td>
+<td>{{ row[2] }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<a href="/dashboard" class="btn btn-primary">
+Back to Dashboard
+</a>
+
+</div>
+
+</div>
+
+</body>
+</html>

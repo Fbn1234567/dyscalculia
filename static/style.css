@@ -1,0 +1,227 @@
+/* =======================
+GLOBAL
+======================= */
+
+body{
+margin:0;
+font-family:"Segoe UI", Arial, sans-serif;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+color:#e5e7eb;
+}
+
+/* =======================
+NAVBAR
+======================= */
+
+.navbar{
+background:#020617;
+color:white;
+padding:20px 40px;
+font-size:22px;
+font-weight:600;
+box-shadow:0 3px 10px rgba(0,0,0,0.4);
+}
+
+/* =======================
+MAIN CONTAINER
+======================= */
+
+.container{
+width:90%;
+max-width:900px;
+margin:80px auto;
+}
+
+/* =======================
+CARD
+======================= */
+
+.card{
+background:#1e293b;
+padding:40px;
+border-radius:14px;
+box-shadow:0 8px 30px rgba(0,0,0,0.4);
+overflow-x:auto;
+}
+
+/* =======================
+HEADINGS
+======================= */
+
+h1,h2,h3{
+text-align:center;
+margin-bottom:25px;
+font-weight:600;
+}
+
+/* =======================
+FORM INPUTS
+======================= */
+
+input, select{
+width:100%;
+padding:12px;
+margin-top:8px;
+margin-bottom:20px;
+border-radius:8px;
+border:1px solid #334155;
+background:#020617;
+color:white;
+font-size:14px;
+}
+
+input::placeholder{
+color:#94a3b8;
+}
+
+input:focus, select:focus{
+outline:none;
+border:1px solid #3b82f6;
+box-shadow:0 0 5px rgba(59,130,246,0.4);
+}
+
+/* =======================
+BUTTON
+======================= */
+
+button{
+width:100%;
+padding:12px;
+background:#3b82f6;
+border:none;
+border-radius:8px;
+color:white;
+font-size:15px;
+font-weight:500;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+background:#2563eb;
+transform:translateY(-1px);
+}
+
+/* =======================
+LINK
+======================= */
+
+a{
+color:#60a5fa;
+text-decoration:none;
+}
+
+a:hover{
+text-decoration:underline;
+}
+
+/* =======================
+FORM LABELS
+======================= */
+
+label{
+font-size:14px;
+color:#cbd5f5;
+}
+
+/* =======================
+CENTER TEXT
+======================= */
+
+.center{
+text-align:center;
+}
+
+/* =======================
+HISTORY TABLE
+======================= */
+
+.history-table{
+width:100%;
+border-collapse:collapse;
+margin-top:25px;
+font-size:14px;
+}
+
+.history-table th{
+background:#1f2937;
+color:white;
+padding:12px;
+text-align:center;
+}
+
+.history-table td{
+padding:12px;
+text-align:center;
+border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.history-table tr:hover{
+background:rgba(255,255,255,0.05);
+}
+
+/* =======================
+RISK COLORS
+======================= */
+
+.risk-high{
+color:#ff6b6b;
+font-weight:bold;
+}
+
+.risk-medium{
+color:#facc15;
+font-weight:bold;
+}
+
+.risk-low{
+color:#4ade80;
+font-weight:bold;
+}
+
+/* ======================
+DASHBOARD GRID
+====================== */
+
+.dashboard-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:25px;
+margin-top:40px;
+}
+
+/* ======================
+DASHBOARD CARD
+====================== */
+
+.dashboard-card{
+background:#1e293b;
+padding:30px;
+border-radius:12px;
+text-align:center;
+box-shadow:0 8px 25px rgba(0,0,0,0.4);
+transition:0.3s;
+}
+
+.dashboard-card:hover{
+transform:translateY(-5px);
+}
+
+/* ======================
+BUTTON
+====================== */
+
+.btn{
+display:inline-block;
+margin-top:15px;
+padding:10px 18px;
+background:#3b82f6;
+border-radius:6px;
+color:white;
+text-decoration:none;
+font-size:14px;
+}
+
+.btn:hover{
+background:#2563eb;
+}

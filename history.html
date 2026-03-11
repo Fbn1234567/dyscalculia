@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test History</title>
+</head>
+<body>
+
+<h2>Your Cognitive Test History</h2>
+
+<table border="1">
+    <tr>
+        <th>ANS Accuracy</th>
+        <th>ANS RT</th>
+        <th>WM</th>
+        <th>Symbolic Accuracy</th>
+        <th>Symbolic RT</th>
+        <th>Risk</th>
+        <th>Date</th>
+    </tr>
+
+    {% for row in results %}
+    <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+        <td>{{ row[3] }}</td>
+        <td>{{ row[4] }}</td>
+        <td>{{ row[5] }}</td>
+        <td>{{ row[6] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="/dashboard">Back</a>
+
+</body>
+</html>
+{% endblock %}
