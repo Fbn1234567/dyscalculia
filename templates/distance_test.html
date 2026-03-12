@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Number Distance Test</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f4f6f9;
+        }
+
+        .container {
+            margin-top: 100px;
+        }
+
+        .number-btn {
+            font-size: 40px;
+            padding: 25px 50px;
+            margin: 40px;
+            border: none;
+            border-radius: 10px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+        }
+
+        .number-btn:hover {
+            background: #2980b9;
+        }
+
+        .trial {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+
+    <script>
+
+        let startTime;
+
+        window.onload = function () {
+            startTime = new Date().getTime();
+        }
+
+        function recordChoice(choice) {
+
+            let endTime = new Date().getTime();
+            let responseTime = (endTime - startTime) / 1000;
+
+            document.getElementById("choice").value = choice;
+            document.getElementById("response_time").value = responseTime;
+
+            document.getElementById("testForm").submit();
+        }
+
+    </script>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Number Comparison Test</h1>
+
+        <p class="trial">Trial {{trial}} / 10</p>
+
+        <p>Click the larger number</p>
+
+        <form id="testForm" method="POST" action="/submit_distance">
+
+            <input type="hidden" name="choice" id="choice">
+            <input type="hidden" name="response_time" id="response_time">
+
+            <button type="button" class="number-btn" onclick="recordChoice('left')">
+                {{left}}
+            </button>
+
+            <button type="button" class="number-btn" onclick="recordChoice('right')">
+                {{right}}
+            </button>
+
+        </form>
+
+    </div>
+
+</body>
+
+</html>

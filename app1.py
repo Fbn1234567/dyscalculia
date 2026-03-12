@@ -158,10 +158,9 @@ def start_cognitive():
     return redirect("/symbolic_test")
 
 
-# =====================================================
-# SYMBOLIC NUMBER COMPARISON TEST
-# =====================================================
-
+# -----------------------------
+# SYMBOLIC TEST
+# -----------------------------
 @app.route("/symbolic_test")
 def symbolic_test():
 
@@ -205,6 +204,7 @@ def submit_symbolic():
     right=session["right"]
 
     correct="left" if left>right else "right"
+
     correct_val=1 if choice==correct else 0
 
     session["symbolic_data"].append({"correct":correct_val,"rt":rt})
@@ -227,10 +227,9 @@ def finish_symbolic():
     return redirect("/ans_test")
 
 
-# =====================================================
-# ANS DOT COMPARISON TEST
-# =====================================================
-
+# -----------------------------
+# ANS TEST
+# -----------------------------
 @app.route("/ans_test")
 def ans_test():
 
@@ -274,6 +273,7 @@ def submit_ans():
     right=session["ans_right"]
 
     correct="left" if left>right else "right"
+
     correct_val=1 if choice==correct else 0
 
     session["ans_data"].append({"correct":correct_val,"rt":rt})
@@ -293,148 +293,12 @@ def finish_ans():
     session["Mean_ACC_ANS"]=accuracy
     session["Mean_RTs_ANS"]=mean_rt
 
-    return redirect("/distance_test")
-
-
-# =====================================================
-# NUMBER DISTANCE TEST
-# =====================================================
-
-@app.route("/distance_test")
-def distance_test():
-
-    session["distance_data"]=[]
-    session["distance_trial"]=0
-
-    return redirect("/distance_trial")
-
-
-@app.route("/distance_trial")
-def distance_trial():
-
-    trial=session["distance_trial"]
-
-    if trial>=10:
-        return redirect("/finish_distance")
-
-    left=random.randint(1,50)
-    right=random.randint(1,50)
-
-    while left==right:
-        right=random.randint(1,50)
-
-    session["dist_left"]=left
-    session["dist_right"]=right
-
-    return render_template("distance_test.html",
-        left=left,
-        right=right,
-        trial=trial+1
-    )
-
-
-@app.route("/submit_distance",methods=["POST"])
-def submit_distance():
-
-    choice=request.form["choice"]
-    rt=float(request.form["response_time"])
-
-    left=session["dist_left"]
-    right=session["dist_right"]
-
-    correct="left" if left>right else "right"
-    correct_val=1 if choice==correct else 0
-
-    session["distance_data"].append({"correct":correct_val,"rt":rt})
-    session["distance_trial"]+=1
-
-    return redirect("/distance_trial")
-
-
-@app.route("/finish_distance")
-def finish_distance():
-
-    trials=session["distance_data"]
-
-    acc=sum(t["correct"] for t in trials)/len(trials)
-    rt=sum(t["rt"] for t in trials)/len(trials)
-
-    session["Distance_ACC"]=acc
-    session["Distance_RT"]=rt
-
-    return redirect("/fraction_test")
-
-
-# =====================================================
-# FRACTION TEST
-# =====================================================
-
-@app.route("/fraction_test")
-def fraction_test():
-
-    session["fraction_data"]=[]
-    session["fraction_trial"]=0
-
-    return redirect("/fraction_trial")
-
-
-@app.route("/fraction_trial")
-def fraction_trial():
-
-    trial=session["fraction_trial"]
-
-    if trial>=10:
-        return redirect("/finish_fraction")
-
-    a=random.randint(1,9)
-    b=random.randint(2,10)
-    c=random.randint(1,9)
-    d=random.randint(2,10)
-
-    session["frac_left"]=(a,b)
-    session["frac_right"]=(c,d)
-
-    return render_template("fraction_test.html",
-        left=f"{a}/{b}",
-        right=f"{c}/{d}",
-        trial=trial+1
-    )
-
-
-@app.route("/submit_fraction",methods=["POST"])
-def submit_fraction():
-
-    choice=request.form["choice"]
-    rt=float(request.form["response_time"])
-
-    a,b=session["frac_left"]
-    c,d=session["frac_right"]
-
-    correct="left" if (a/b)>(c/d) else "right"
-    correct_val=1 if choice==correct else 0
-
-    session["fraction_data"].append({"correct":correct_val,"rt":rt})
-    session["fraction_trial"]+=1
-
-    return redirect("/fraction_trial")
-
-
-@app.route("/finish_fraction")
-def finish_fraction():
-
-    trials=session["fraction_data"]
-
-    accuracy=sum(t["correct"] for t in trials)/len(trials)
-
-    session["Fraction_ACC"]=accuracy
-
     return redirect("/wm_test")
 
 
-# =====================================================
+# -----------------------------
 # WORKING MEMORY TEST
-# =====================================================
-
+# -----------------------------
 @app.route("/wm_test")
 def wm_test():
 
@@ -485,10 +349,9 @@ def finish_wm():
     return redirect("/final_prediction")
 
 
-# =====================================================
-# FINAL ML PREDICTION
-# =====================================================
-
+# -----------------------------
+# FINAL PREDICTION
+# -----------------------------
 @app.route("/final_prediction")
 def final_prediction():
 
@@ -545,5 +408,52 @@ def final_prediction():
     )
 
 
+# -----------------------------
+# HISTORY
+# -----------------------------
+@app.route("/history")
+def history():
+
+    conn=get_db_connection()
+    cur=conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+    SELECT ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level,created_at
+    FROM results
+    WHERE student_email=%s
+    ORDER BY created_at DESC
+    """,(session["user"],))
+
+    results=cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("history.html",results=results)
+
+
+# -----------------------------
+# TEACHER RESULTS
+# -----------------------------
+@app.route("/teacher_results")
+def teacher_results():
+
+    conn=get_db_connection()
+    cur=conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+    SELECT student_email,risk_level,created_at
+    FROM results
+    ORDER BY created_at DESC
+    """)
+
+    results=cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("teacher_results.html",results=results)
+
+
 if __name__=="__main__":
-    app.run(debug=True)
+    app.run()
