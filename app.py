@@ -18,16 +18,16 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
-# ---------------------------
-# LOAD MODEL
-# ---------------------------
+# -----------------------------
+# LOAD MACHINE LEARNING MODEL
+# -----------------------------
 model = pickle.load(open("model.pkl","rb"))
 label_encoder = pickle.load(open("label_encoder.pkl","rb"))
 
 
-# ---------------------------
+# -----------------------------
 # HOME
-# ---------------------------
+# -----------------------------
 @app.route("/")
 def home():
 
@@ -37,9 +37,9 @@ def home():
     return redirect("/login")
 
 
-# ---------------------------
+# -----------------------------
 # LOGIN
-# ---------------------------
+# -----------------------------
 @app.route("/login",methods=["GET","POST"])
 def login():
 
@@ -64,14 +64,64 @@ def login():
 
             return redirect("/dashboard")
 
-        return render_template("login.html",error="Invalid login")
+        return render_template("login.html",error="Invalid credentials")
 
     return render_template("login.html")
 
 
-# ---------------------------
+# -----------------------------
+# REGISTER
+# -----------------------------
+@app.route("/register",methods=["GET","POST"])
+def register():
+
+    conn=get_db_connection()
+    cur=conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("SELECT id,email FROM users WHERE role='Teacher'")
+    teachers=cur.fetchall()
+
+    cur.execute("SELECT id,email FROM users WHERE role='Parent'")
+    parents=cur.fetchall()
+
+    if request.method=="POST":
+
+        email=request.form["email"]
+        password=request.form["password"]
+        role=request.form["role"]
+
+        teacher_id=request.form.get("teacher_id")
+        parent_id=request.form.get("parent_id")
+
+        hashed=bcrypt.generate_password_hash(password).decode("utf-8")
+
+        if role=="Student":
+
+            cur.execute("""
+            INSERT INTO users(email,password,role,teacher_id,parent_id)
+            VALUES(%s,%s,%s,%s,%s)
+            """,(email,hashed,role,teacher_id,parent_id))
+
+        else:
+
+            cur.execute("""
+            INSERT INTO users(email,password,role)
+            VALUES(%s,%s,%s)
+            """,(email,hashed,role))
+
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        return redirect("/login")
+
+    return render_template("register.html",teachers=teachers,parents=parents)
+
+
+# -----------------------------
 # DASHBOARD
-# ---------------------------
+# -----------------------------
 @app.route("/dashboard")
 def dashboard():
 
@@ -81,41 +131,40 @@ def dashboard():
     role=session["role"]
 
     if role=="Student":
-        return render_template("student_dashboard.html")
+        return render_template("student_dashboard.html",user=session["user"])
 
     if role=="Teacher":
-        return render_template("teacher_dashboard.html")
+        return render_template("teacher_dashboard.html",user=session["user"])
 
     if role=="Parent":
-        return render_template("parent_dashboard.html")
+        return render_template("parent_dashboard.html",user=session["user"])
 
-    return render_template("admin_dashboard.html")
+    if role=="Admin":
+        return render_template("admin_dashboard.html",user=session["user"])
 
 
-# ---------------------------
+# -----------------------------
 # LOGOUT
-# ---------------------------
+# -----------------------------
 @app.route("/logout")
 def logout():
 
     session.clear()
-
     return redirect("/login")
 
 
-# ---------------------------
+# -----------------------------
 # START TEST
-# ---------------------------
+# -----------------------------
 @app.route("/start_cognitive")
 def start_cognitive():
 
     return redirect("/symbolic_test")
 
 
-# =================================================
+# -----------------------------
 # SYMBOLIC TEST
-# =================================================
-
+# -----------------------------
 @app.route("/symbolic_test")
 def symbolic_test():
 
@@ -142,7 +191,12 @@ def symbolic_trial():
     session["left"]=left
     session["right"]=right
 
-    return render_template("symbolic_test.html",left=left,right=right,trial=trial+1)
+    return render_template(
+        "symbolic_test.html",
+        left=left,
+        right=right,
+        trial=trial+1
+    )
 
 
 @app.route("/submit_symbolic",methods=["POST"])
@@ -155,11 +209,9 @@ def submit_symbolic():
     right=session["right"]
 
     correct="left" if left>right else "right"
-
     correct_val=1 if choice==correct else 0
 
     session["symbolic_data"].append({"correct":correct_val,"rt":rt})
-
     session["symbolic_trial"]+=1
 
     return redirect("/symbolic_trial")
@@ -170,19 +222,18 @@ def finish_symbolic():
 
     trials=session["symbolic_data"]
 
-    acc=sum(t["correct"] for t in trials)/len(trials)
-    rt=sum(t["rt"] for t in trials)/len(trials)
+    accuracy=sum(t["correct"] for t in trials)/len(trials)
+    mean_rt=sum(t["rt"] for t in trials)/len(trials)
 
-    session["Accuracy_SymbolicComp"]=acc
-    session["RTs_SymbolicComp"]=rt
+    session["Accuracy_SymbolicComp"]=accuracy
+    session["RTs_SymbolicComp"]=mean_rt
 
     return redirect("/ans_test")
 
 
-# =================================================
+# -----------------------------
 # ANS TEST
-# =================================================
-
+# -----------------------------
 @app.route("/ans_test")
 def ans_test():
 
@@ -209,7 +260,12 @@ def ans_trial():
     session["ans_left"]=left
     session["ans_right"]=right
 
-    return render_template("ans_test.html",left=left,right=right,trial=trial+1)
+    return render_template(
+        "ans_test.html",
+        left=left,
+        right=right,
+        trial=trial+1
+    )
 
 
 @app.route("/submit_ans",methods=["POST"])
@@ -222,11 +278,9 @@ def submit_ans():
     right=session["ans_right"]
 
     correct="left" if left>right else "right"
-
     correct_val=1 if choice==correct else 0
 
     session["ans_data"].append({"correct":correct_val,"rt":rt})
-
     session["ans_trial"]+=1
 
     return redirect("/ans_trial")
@@ -237,86 +291,18 @@ def finish_ans():
 
     trials=session["ans_data"]
 
-    acc=sum(t["correct"] for t in trials)/len(trials)
-    rt=sum(t["rt"] for t in trials)/len(trials)
+    accuracy=sum(t["correct"] for t in trials)/len(trials)
+    mean_rt=sum(t["rt"] for t in trials)/len(trials)
 
-    session["Mean_ACC_ANS"]=acc
-    session["Mean_RTs_ANS"]=rt
-
-    return redirect("/fraction_test")
-
-
-# =================================================
-# FRACTION TEST
-# =================================================
-
-@app.route("/fraction_test")
-def fraction_test():
-
-    session["fraction_data"]=[]
-    session["fraction_trial"]=0
-
-    return redirect("/fraction_trial")
-
-
-@app.route("/fraction_trial")
-def fraction_trial():
-
-    trial=session["fraction_trial"]
-
-    if trial>=10:
-        return redirect("/finish_fraction")
-
-    a=random.randint(1,9)
-    b=random.randint(2,10)
-
-    c=random.randint(1,9)
-    d=random.randint(2,10)
-
-    session["frac_left"]=(a,b)
-    session["frac_right"]=(c,d)
-
-    return render_template("fraction_test.html",
-                           left=f"{a}/{b}",
-                           right=f"{c}/{d}",
-                           trial=trial+1)
-
-
-@app.route("/submit_fraction",methods=["POST"])
-def submit_fraction():
-
-    choice=request.form["choice"]
-
-    a,b=session["frac_left"]
-    c,d=session["frac_right"]
-
-    correct="left" if (a/b)>(c/d) else "right"
-
-    correct_val=1 if choice==correct else 0
-
-    session["fraction_data"].append({"correct":correct_val})
-
-    session["fraction_trial"]+=1
-
-    return redirect("/fraction_trial")
-
-
-@app.route("/finish_fraction")
-def finish_fraction():
-
-    trials=session["fraction_data"]
-
-    acc=sum(t["correct"] for t in trials)/len(trials)
-
-    session["Fraction_ACC"]=acc
+    session["Mean_ACC_ANS"]=accuracy
+    session["Mean_RTs_ANS"]=mean_rt
 
     return redirect("/wm_test")
 
 
-# =================================================
-# WORKING MEMORY
-# =================================================
-
+# -----------------------------
+# WORKING MEMORY TEST
+# -----------------------------
 @app.route("/wm_test")
 def wm_test():
 
@@ -329,36 +315,29 @@ def wm_test():
 @app.route("/wm_trial")
 def wm_trial():
 
-    level=session.get("wm_level",3)
+    level=session["wm_level"]
 
-    seq=[str(random.randint(1,9)) for _ in range(level)]
+    sequence=[str(random.randint(1,9)) for _ in range(level)]
+    session["sequence"]=sequence
 
-    session["sequence"]=seq
-
-    return render_template("wm_test.html",sequence=" ".join(seq))
+    return render_template(
+        "wm_test.html",
+        sequence=" ".join(sequence)
+    )
 
 
 @app.route("/submit_wm",methods=["POST"])
 def submit_wm():
 
-    if "sequence" not in session:
-        return redirect("/wm_test")
-
-    answer=request.form.get("answer","").replace(" ","")
-
+    answer=request.form["answer"].replace(" ","")
     correct_seq="".join(session["sequence"])
 
     correct=1 if answer==correct_seq else 0
 
-    data=session.get("wm_data",[])
-    level=session.get("wm_level",3)
-
-    data.append({"level":level,"correct":correct})
-
-    session["wm_data"]=data
+    session["wm_data"].append({"level":session["wm_level"],"correct":correct})
 
     if correct:
-        session["wm_level"]=level+1
+        session["wm_level"]+=1
         return redirect("/wm_trial")
 
     return redirect("/finish_wm")
@@ -367,8 +346,7 @@ def submit_wm():
 @app.route("/finish_wm")
 def finish_wm():
 
-    data=session.get("wm_data",[])
-
+    data=session["wm_data"]
     scores=[d["level"] for d in data if d["correct"]==1]
 
     session["wm_K"]=max(scores) if scores else 0
@@ -376,49 +354,49 @@ def finish_wm():
     return redirect("/final_prediction")
 
 
-# =================================================
-# FINAL PREDICTION
-# =================================================
-
+# -----------------------------
+# FINAL ML PREDICTION
+# -----------------------------
 @app.route("/final_prediction")
 def final_prediction():
 
-    if "user" not in session:
-        return redirect("/login")
-
     features=np.array([[
-
         session["Mean_ACC_ANS"],
         session["Mean_RTs_ANS"],
         session["wm_K"],
         session["Accuracy_SymbolicComp"],
         session["RTs_SymbolicComp"]
-
     ]])
 
     prediction=model.predict(features)
+    probability=model.predict_proba(features)
 
     label=label_encoder.inverse_transform(prediction)[0].lower()
+    confidence=round(max(probability[0])*100,2)
 
     if label in ["dd","severe","high"]:
-        risk="High Risk"
+        risk="Highest Risk"
+        rec="Immediate professional evaluation recommended."
+
     elif label in ["moderate","medium"]:
         risk="Medium Risk"
-    elif label in ["mild","low"]:
-        risk="Low Risk"
-    else:
-        risk="No Dyscalculia"
+        rec="Provide additional math practice and monitoring."
 
+    elif label in ["mild","low"]:
+        risk="Lowest Risk"
+        rec="Provide reinforcement activities."
+
+    else:
+        risk="No Dyscalculia Detected"
+        rec="Continue normal learning."
 
     conn=get_db_connection()
     cur=conn.cursor()
 
     cur.execute("""
-    INSERT INTO results
-    (student_email,ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level)
+    INSERT INTO results(student_email,ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level)
     VALUES(%s,%s,%s,%s,%s,%s,%s)
     """,(
-
         session["user"],
         session["Mean_ACC_ANS"],
         session["Mean_RTs_ANS"],
@@ -426,43 +404,19 @@ def final_prediction():
         session["Accuracy_SymbolicComp"],
         session["RTs_SymbolicComp"],
         risk
-
     ))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return render_template("final_result.html",risk=risk)
-
-
-# =================================================
-# HISTORY
-# =================================================
-
-@app.route("/history")
-def history():
-
-    if "user" not in session:
-        return redirect("/login")
-
-    conn=get_db_connection()
-    cur=conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("""
-    SELECT ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level,created_at
-    FROM results
-    WHERE student_email=%s
-    ORDER BY created_at DESC
-    """,(session["user"],))
-
-    results=cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template("history.html",results=results)
+    return render_template(
+        "final_result.html",
+        risk=risk,
+        confidence=confidence,
+        recommendations=rec
+    )
 
 
 if __name__=="__main__":
-    app.run(debug=True)
+    app.run()

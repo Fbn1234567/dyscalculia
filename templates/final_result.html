@@ -2,8 +2,10 @@
 <html>
 
 <head>
+
     <title>Assessment Result</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
@@ -22,9 +24,12 @@
 
             <h1 class="result-high">{{ risk }}</h1>
 
+            <h3>Prediction Confidence</h3>
+            <p>{{ confidence }}%</p>
+
             <h3>Recommendation</h3>
 
-            <p style="white-space: pre-line;">
+            <p style="white-space:pre-line;">
                 {{ recommendations }}
             </p>
 
