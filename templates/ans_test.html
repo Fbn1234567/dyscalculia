@@ -2,29 +2,31 @@
 <html>
 
 <head>
+
     <title>ANS Dot Comparison Test</title>
 
     <style>
         body {
             font-family: Arial;
             text-align: center;
-            background: #f4f6f9;
+            background: #0f1f3d;
+            color: white;
         }
 
         .container {
-            margin-top: 50px;
+            margin-top: 80px;
         }
 
         .canvas-box {
             display: inline-block;
-            margin: 30px;
+            margin: 40px;
             cursor: pointer;
         }
 
         canvas {
-            background: white;
-            border: 2px solid #ddd;
+            background: #ffffff;
             border-radius: 10px;
+            border: 2px solid #ddd;
         }
     </style>
 
@@ -41,10 +43,13 @@
 
 }
 
+
         function drawDots(canvasId, count) {
 
             let canvas = document.getElementById(canvasId);
             let ctx = canvas.getContext("2d");
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             for (let i = 0; i < count; i++) {
 
@@ -59,6 +64,7 @@
             }
 
         }
+
 
         function choose(side) {
 
@@ -80,11 +86,9 @@
 
     <div class="container">
 
-        <h1>Dot Comparison Test</h1>
+        <h1>ANS Task (Trial {{trial}} / 10)</h1>
 
-        <h3>Trial {{trial}} / 10</h3>
-
-        <p>Click the side with more dots</p>
+        <p>Click the side with <b>MORE dots</b></p>
 
         <form id="form" method="POST" action="/submit_ans">
 
