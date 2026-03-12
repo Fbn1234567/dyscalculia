@@ -2,7 +2,6 @@
 <html>
 
 <head>
-
     <title>Number Distance Test</title>
 
     <style>
@@ -17,23 +16,23 @@
         }
 
         .number-btn {
-            font-size: 40px;
-            padding: 25px 50px;
+            font-size: 42px;
+            padding: 25px 60px;
             margin: 40px;
             border: none;
             border-radius: 10px;
-            background: #3498db;
+            background: #9b59b6;
             color: white;
             cursor: pointer;
         }
 
         .number-btn:hover {
-            background: #2980b9;
+            background: #8e44ad;
         }
 
         .trial {
             font-size: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
     </style>
 
@@ -45,15 +44,15 @@
             startTime = new Date().getTime();
         }
 
-        function recordChoice(choice) {
+        function choose(side) {
 
             let endTime = new Date().getTime();
-            let responseTime = (endTime - startTime) / 1000;
+            let rt = (endTime - startTime) / 1000;
 
-            document.getElementById("choice").value = choice;
-            document.getElementById("response_time").value = responseTime;
+            document.getElementById("choice").value = side;
+            document.getElementById("response_time").value = rt;
 
-            document.getElementById("testForm").submit();
+            document.getElementById("form").submit();
         }
 
     </script>
@@ -64,22 +63,24 @@
 
     <div class="container">
 
-        <h1>Number Comparison Test</h1>
+        <h1>Number Distance Test</h1>
 
         <p class="trial">Trial {{trial}} / 10</p>
 
-        <p>Click the larger number</p>
+        <p>
+            Choose the larger number as quickly as possible
+        </p>
 
-        <form id="testForm" method="POST" action="/submit_distance">
+        <form id="form" method="POST" action="/submit_distance">
 
             <input type="hidden" name="choice" id="choice">
             <input type="hidden" name="response_time" id="response_time">
 
-            <button type="button" class="number-btn" onclick="recordChoice('left')">
+            <button type="button" class="number-btn" onclick="choose('left')">
                 {{left}}
             </button>
 
-            <button type="button" class="number-btn" onclick="recordChoice('right')">
+            <button type="button" class="number-btn" onclick="choose('right')">
                 {{right}}
             </button>
 
