@@ -2,75 +2,107 @@
 <html>
 
 <head>
+    <title>ANS Dot Comparison Test</title>
 
-<title>ANS Test</title>
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: #f4f6f9;
+        }
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        .container {
+            margin-top: 50px;
+        }
+
+        .canvas-box {
+            display: inline-block;
+            margin: 30px;
+            cursor: pointer;
+        }
+
+        canvas {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+        }
+    </style>
+
+    <script>
+
+        let startTime;
+
+        window.onload = function () {
+
+            startTime = new Date().getTime();
+
+            drawDots("leftCanvas", {{ left }});
+        drawDots("rightCanvas", {{ right }});
+
+}
+
+        function drawDots(canvasId, count) {
+
+            let canvas = document.getElementById(canvasId);
+            let ctx = canvas.getContext("2d");
+
+            for (let i = 0; i < count; i++) {
+
+                let x = Math.random() * 180 + 10;
+                let y = Math.random() * 180 + 10;
+
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = "black";
+                ctx.fill();
+
+            }
+
+        }
+
+        function choose(side) {
+
+            let endTime = new Date().getTime();
+            let rt = (endTime - startTime) / 1000;
+
+            document.getElementById("choice").value = side;
+            document.getElementById("response_time").value = rt;
+
+            document.getElementById("form").submit();
+
+        }
+
+    </script>
 
 </head>
 
 <body>
 
-<div class="navbar">
-Dyscalculia Detection System
-</div>
+    <div class="container">
 
-<div class="container">
+        <h1>Dot Comparison Test</h1>
 
-<div class="card center">
+        <h3>Trial {{trial}} / 10</h3>
 
-<h2>ANS Task (Trial {{ trial }}/10)</h2>
+        <p>Click the side with more dots</p>
 
-<p>Click the side with <b>MORE dots</b></p>
+        <form id="form" method="POST" action="/submit_ans">
 
-<form method="post" action="/submit_ans" id="ansForm">
+            <input type="hidden" name="choice" id="choice">
+            <input type="hidden" name="response_time" id="response_time">
 
-<input type="hidden" name="choice" id="choice">
-<input type="hidden" name="response_time" id="response_time">
+            <div class="canvas-box" onclick="choose('left')">
+                <canvas id="leftCanvas" width="200" height="200"></canvas>
+            </div>
 
-<div class="dot-container">
+            <div class="canvas-box" onclick="choose('right')">
+                <canvas id="rightCanvas" width="200" height="200"></canvas>
+            </div>
 
-<div class="dot-box" onclick="choose('left')">
+        </form>
 
-{% for i in range(left) %}
-<span class="dot">●</span>
-{% endfor %}
-
-</div>
-
-<div class="dot-box" onclick="choose('right')">
-
-{% for i in range(right) %}
-<span class="dot">●</span>
-{% endfor %}
-
-</div>
-
-</div>
-
-</form>
-
-</div>
-
-</div>
-
-<script>
-
-let startTime = Date.now();
-
-function choose(side){
-
-let endTime = Date.now();
-let rt = (endTime - startTime) / 1000;
-
-document.getElementById("choice").value = side;
-document.getElementById("response_time").value = rt;
-
-document.getElementById("ansForm").submit();
-
-}
-
-</script>
+    </div>
 
 </body>
+
 </html>
