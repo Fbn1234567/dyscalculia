@@ -30,7 +30,7 @@ label_encoder = pickle.load(open("models/label_encoder.pkl", "rb"))
 
 
 # -----------------------------
-# HOME → always login
+# HOME → LOGIN
 # -----------------------------
 @app.route("/")
 def home():
@@ -155,6 +155,39 @@ def dashboard():
 def logout():
     session.clear()
     return redirect("/login")
+
+
+# -----------------------------
+# CREATE TEACHER
+# -----------------------------
+@app.route("/create_teacher", methods=["GET", "POST"])
+def create_teacher():
+
+    if request.method == "POST":
+
+        email = request.form["email"]
+        password = request.form["password"]
+
+        hashed = bcrypt.generate_password_hash(password).decode("utf-8")
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            INSERT INTO users(email,password,role)
+            VALUES(%s,%s,'Teacher')
+            """,
+            (email, hashed),
+        )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect("/dashboard")
+
+    return render_template("create_teacher.html")
 
 
 # -----------------------------
@@ -428,7 +461,62 @@ def final_prediction():
 
 
 # -----------------------------
-# RUN APP (Render Compatible)
+# HISTORY
+# -----------------------------
+@app.route("/history")
+def history():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute(
+        """
+        SELECT ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level,created_at
+        FROM results
+        WHERE student_email=%s
+        ORDER BY created_at DESC
+        """,
+        (session["user"],),
+    )
+
+    results = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("history.html", results=results)
+
+
+# -----------------------------
+# TEACHER RESULTS
+# -----------------------------
+@app.route("/teacher_results")
+def teacher_results():
+
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute(
+        """
+        SELECT student_email,risk_level,created_at
+        FROM results
+        ORDER BY created_at DESC
+        """
+    )
+
+    results = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("teacher_results.html", results=results)
+
+
+# -----------------------------
+# RUN APP
 # -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
