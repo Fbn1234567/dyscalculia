@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, redirect, session
 from flask_bcrypt import Bcrypt
 import random
-import pickle
-import numpy as np
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -23,10 +21,31 @@ def get_db_connection():
 
 
 # -----------------------------
-# LOAD ML MODEL
+# ML MODEL LAZY LOADING
 # -----------------------------
-model = pickle.load(open("models/model.pkl", "rb"))
-label_encoder = pickle.load(open("models/label_encoder.pkl", "rb"))
+model = None
+label_encoder = None
+
+
+def load_model():
+    global model, label_encoder
+
+    if model is None:
+
+        import pickle
+        import numpy as np
+
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        model = pickle.load(
+            open(os.path.join(BASE_DIR, "models", "model.pkl"), "rb")
+        )
+
+        label_encoder = pickle.load(
+            open(os.path.join(BASE_DIR, "models", "label_encoder.pkl"), "rb")
+        )
+
+    return model, label_encoder
 
 
 # -----------------------------
@@ -397,6 +416,10 @@ def finish_wm():
 @app.route("/final_prediction")
 def final_prediction():
 
+    model, label_encoder = load_model()
+
+    import numpy as np
+
     features = np.array([
         [
             session["Mean_ACC_ANS"],
@@ -519,5 +542,4 @@ def teacher_results():
 # RUN APP
 # -----------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run()
