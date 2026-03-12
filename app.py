@@ -109,7 +109,7 @@ def start_cognitive():
 
 
 # =====================================================
-# SYMBOLIC NUMBER COMPARISON
+# SYMBOLIC NUMBER COMPARISON TEST
 # =====================================================
 
 @app.route("/symbolic_test")
@@ -138,7 +138,8 @@ def symbolic_trial():
     session["left"]=left
     session["right"]=right
 
-    return render_template("symbolic_test.html",
+    return render_template(
+        "symbolic_test.html",
         left=left,
         right=right,
         trial=trial+1
@@ -178,7 +179,7 @@ def finish_symbolic():
 
 
 # =====================================================
-# ANS TEST
+# ANS DOT COMPARISON TEST
 # =====================================================
 
 @app.route("/ans_test")
@@ -207,7 +208,8 @@ def ans_trial():
     session["ans_left"]=left
     session["ans_right"]=right
 
-    return render_template("ans_test.html",
+    return render_template(
+        "ans_test.html",
         left=left,
         right=right,
         trial=trial+1
@@ -242,91 +244,6 @@ def finish_ans():
 
     session["Mean_ACC_ANS"]=accuracy
     session["Mean_RTs_ANS"]=mean_rt
-
-    return redirect("/distance_test")
-
-
-# =====================================================
-# NUMBER DISTANCE TEST
-# =====================================================
-
-@app.route("/distance_test")
-def distance_test():
-
-    session["distance_data"]=[]
-    session["distance_trial"]=0
-
-    return redirect("/distance_trial")
-
-
-@app.route("/distance_trial")
-def distance_trial():
-
-    trial=session["distance_trial"]
-
-    if trial>=10:
-        return redirect("/finish_distance")
-
-    # create small distance or large distance trials
-    if random.random() < 0.5:
-
-        base=random.randint(1,8)
-        left=base
-        right=base+1
-
-    else:
-
-        left=random.randint(1,4)
-        right=random.randint(7,10)
-
-    if random.random() < 0.5:
-        left,right=right,left
-
-    session["dist_left"]=left
-    session["dist_right"]=right
-    session["distance_value"]=abs(left-right)
-
-    return render_template(
-        "distance_test.html",
-        left=left,
-        right=right,
-        trial=trial+1
-    )
-
-
-@app.route("/submit_distance",methods=["POST"])
-def submit_distance():
-
-    choice=request.form["choice"]
-    rt=float(request.form["response_time"])
-
-    left=session["dist_left"]
-    right=session["dist_right"]
-
-    correct="left" if left>right else "right"
-    correct_val=1 if choice==correct else 0
-
-    session["distance_data"].append({
-        "correct":correct_val,
-        "rt":rt,
-        "distance":session["distance_value"]
-    })
-
-    session["distance_trial"]+=1
-
-    return redirect("/distance_trial")
-
-
-@app.route("/finish_distance")
-def finish_distance():
-
-    trials=session["distance_data"]
-
-    acc=sum(t["correct"] for t in trials)/len(trials)
-    rt=sum(t["rt"] for t in trials)/len(trials)
-
-    session["Distance_ACC"]=acc
-    session["Distance_RT"]=rt
 
     return redirect("/fraction_test")
 
@@ -400,7 +317,7 @@ def finish_fraction():
 
 
 # =====================================================
-# WORKING MEMORY
+# WORKING MEMORY TEST
 # =====================================================
 
 @app.route("/wm_test")
@@ -455,21 +372,24 @@ def finish_wm():
 
 
 # =====================================================
-# FINAL PREDICTION
+# FINAL ML PREDICTION
 # =====================================================
 
 @app.route("/final_prediction")
 def final_prediction():
 
     features=np.array([[
+
         session["Mean_ACC_ANS"],
         session["Mean_RTs_ANS"],
         session["wm_K"],
         session["Accuracy_SymbolicComp"],
         session["RTs_SymbolicComp"]
+
     ]])
 
     prediction=model.predict(features)
+
     label=label_encoder.inverse_transform(prediction)[0].lower()
 
     if label in ["dd","severe","high"]:
