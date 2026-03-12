@@ -388,12 +388,16 @@ def finish_wm():
     return redirect("/final_prediction")
 
 
-# =================================================
+app.route("/final_prediction")
+def # =================================================
 # FINAL PREDICTION
 # =================================================
 
 @app.route("/final_prediction")
 def final_prediction():
+
+    if "user" not in session:
+        return redirect("/login")
 
     features=np.array([[
 
@@ -405,12 +409,53 @@ def final_prediction():
 
     ]])
 
-    pred=model.predict(features)
+    prediction=model.predict(features)
 
-    label=label_encoder.inverse_transform(pred)[0]
+    label=label_encoder.inverse_transform(prediction)[0].lower()
 
-    return render_template("final_result.html",result=label)
 
+    if label in ["dd","severe","high"]:
+        risk="High Risk"
+
+    elif label in ["moderate","medium"]:
+        risk="Medium Risk"
+
+    elif label in ["mild","low"]:
+        risk="Low Risk"
+
+    else:
+        risk="No Dyscalculia"
+
+
+    # SAVE RESULT TO DATABASE
+    conn=get_db_connection()
+    cur=conn.cursor()
+
+    cur.execute("""
+    INSERT INTO results
+    (student_email,ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level)
+    VALUES(%s,%s,%s,%s,%s,%s,%s)
+    """,(
+
+        session["user"],
+        session["Mean_ACC_ANS"],
+        session["Mean_RTs_ANS"],
+        session["wm_K"],
+        session["Accuracy_SymbolicComp"],
+        session["RTs_SymbolicComp"],
+        risk
+
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+    return render_template(
+        "final_result.html",
+        risk=risk
+    )
 
 # =================================================
 # HISTORY
@@ -419,7 +464,25 @@ def final_prediction():
 @app.route("/history")
 def history():
 
-    return render_template("history.html")
+    if "user" not in session:
+        return redirect("/login")
+
+    conn=get_db_connection()
+    cur=conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute("""
+    SELECT ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level,created_at
+    FROM results
+    WHERE student_email=%s
+    ORDER BY created_at DESC
+    """,(session["user"],))
+
+    results=cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("history.html",results=results)
 
 
 if __name__=="__main__":
