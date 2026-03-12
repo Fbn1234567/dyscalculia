@@ -19,7 +19,7 @@ def get_db_connection():
 
 
 # ---------------------------
-# LOAD ML MODEL
+# LOAD MODEL
 # ---------------------------
 model = pickle.load(open("model.pkl","rb"))
 label_encoder = pickle.load(open("label_encoder.pkl","rb"))
@@ -142,12 +142,7 @@ def symbolic_trial():
     session["left"]=left
     session["right"]=right
 
-    return render_template(
-        "symbolic_test.html",
-        left=left,
-        right=right,
-        trial=trial+1
-    )
+    return render_template("symbolic_test.html",left=left,right=right,trial=trial+1)
 
 
 @app.route("/submit_symbolic",methods=["POST"])
@@ -214,12 +209,7 @@ def ans_trial():
     session["ans_left"]=left
     session["ans_right"]=right
 
-    return render_template(
-        "ans_test.html",
-        left=left,
-        right=right,
-        trial=trial+1
-    )
+    return render_template("ans_test.html",left=left,right=right,trial=trial+1)
 
 
 @app.route("/submit_ans",methods=["POST"])
@@ -286,12 +276,10 @@ def fraction_trial():
     session["frac_left"]=(a,b)
     session["frac_right"]=(c,d)
 
-    return render_template(
-        "fraction_test.html",
-        left=f"{a}/{b}",
-        right=f"{c}/{d}",
-        trial=trial+1
-    )
+    return render_template("fraction_test.html",
+                           left=f"{a}/{b}",
+                           right=f"{c}/{d}",
+                           trial=trial+1)
 
 
 @app.route("/submit_fraction",methods=["POST"])
@@ -326,7 +314,7 @@ def finish_fraction():
 
 
 # =================================================
-# WORKING MEMORY TEST
+# WORKING MEMORY
 # =================================================
 
 @app.route("/wm_test")
@@ -388,8 +376,7 @@ def finish_wm():
     return redirect("/final_prediction")
 
 
-app.route("/final_prediction")
-def # =================================================
+# =================================================
 # FINAL PREDICTION
 # =================================================
 
@@ -413,21 +400,16 @@ def final_prediction():
 
     label=label_encoder.inverse_transform(prediction)[0].lower()
 
-
     if label in ["dd","severe","high"]:
         risk="High Risk"
-
     elif label in ["moderate","medium"]:
         risk="Medium Risk"
-
     elif label in ["mild","low"]:
         risk="Low Risk"
-
     else:
         risk="No Dyscalculia"
 
 
-    # SAVE RESULT TO DATABASE
     conn=get_db_connection()
     cur=conn.cursor()
 
@@ -451,11 +433,8 @@ def final_prediction():
     cur.close()
     conn.close()
 
+    return render_template("final_result.html",risk=risk)
 
-    return render_template(
-        "final_result.html",
-        risk=risk
-    )
 
 # =================================================
 # HISTORY
