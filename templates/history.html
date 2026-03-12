@@ -26,11 +26,11 @@
 
             <tr>
 
-                <td>{{ r.ans_acc }}</td>
-                <td>{{ r.ans_rt }}</td>
+                <td>{{ "%.2f"|format(r.ans_acc) }}</td>
+                <td>{{ "%.2f"|format(r.ans_rt) }}</td>
                 <td>{{ r.wm_k }}</td>
-                <td>{{ r.sym_acc }}</td>
-                <td>{{ r.sym_rt }}</td>
+                <td>{{ "%.2f"|format(r.sym_acc) }}</td>
+                <td>{{ "%.2f"|format(r.sym_rt) }}</td>
 
                 <td>
 
@@ -50,7 +50,10 @@
 
                 </td>
 
-                <td>{{ r.created_at }}</td>
+                <td>
+                    {{ r.created_at.strftime("%d %b %Y") }} <br>
+                    <small>{{ r.created_at.strftime("%H:%M") }}</small>
+                </td>
 
             </tr>
 
@@ -62,7 +65,7 @@
 
     <br>
 
-    <a href="/dashboard" class="btn btn-primary">Back</a>
+    <a href="/dashboard" class="back-btn">Back to Dashboard</a>
 
 </div>
 

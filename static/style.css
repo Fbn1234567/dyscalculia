@@ -506,3 +506,167 @@ SYMBOLIC TEST LAYOUT (ADD ONLY – does not change old CSS)
     }
 
 }
+
+/* =================================
+HISTORY DASHBOARD IMPROVEMENT
+================================= */
+
+.history-table {
+
+    width: 100%;
+
+    border-collapse: separate;
+
+    border-spacing: 0 12px;
+
+    font-size: 15px;
+
+    color: #e5e7eb;
+
+}
+
+/* header */
+
+.history-table th {
+
+    background: #111827;
+
+    color: #f9fafb;
+
+    padding: 14px;
+
+    text-align: center;
+
+    font-weight: 600;
+
+}
+
+/* rows */
+
+.history-table td {
+
+    background: rgba(30, 41, 59, 0.9);
+
+    padding: 14px;
+
+    text-align: center;
+
+}
+
+/* rounded rows */
+
+.history-table td:first-child {
+
+    border-top-left-radius: 8px;
+
+    border-bottom-left-radius: 8px;
+
+}
+
+.history-table td:last-child {
+
+    border-top-right-radius: 8px;
+
+    border-bottom-right-radius: 8px;
+
+}
+
+/* hover */
+
+.history-table tr:hover td {
+
+    background: rgba(59, 130, 246, 0.18);
+
+}
+
+/* =================================
+RISK BADGES
+================================= */
+
+.risk-high {
+
+    background: #ef4444;
+
+    color: white;
+
+    padding: 6px 12px;
+
+    border-radius: 6px;
+
+    font-weight: 600;
+
+    font-size: 13px;
+
+}
+
+.risk-medium {
+
+    background: #f59e0b;
+
+    color: white;
+
+    padding: 6px 12px;
+
+    border-radius: 6px;
+
+    font-weight: 600;
+
+    font-size: 13px;
+
+}
+
+.risk-low {
+
+    background: #22c55e;
+
+    color: white;
+
+    padding: 6px 12px;
+
+    border-radius: 6px;
+
+    font-weight: 600;
+
+    font-size: 13px;
+
+}
+
+/* =================================
+BACK BUTTON
+================================= */
+
+.back-btn {
+
+    display: block;
+
+    width: 100%;
+
+    margin-top: 30px;
+
+    padding: 14px;
+
+    font-size: 16px;
+
+    font-weight: 600;
+
+    text-align: center;
+
+    border-radius: 10px;
+
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+
+    color: white;
+
+    text-decoration: none;
+
+    transition: .25s;
+
+}
+
+.back-btn:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 8px 20px rgba(59, 130, 246, .45);
+
+}
