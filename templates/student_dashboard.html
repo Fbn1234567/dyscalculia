@@ -2,8 +2,11 @@
 <html>
 
 <head>
+
     <title>Student Dashboard</title>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 
 <body>
@@ -16,7 +19,7 @@
 
         <h2>Student Dashboard</h2>
 
-        <p class="center">Welcome {{ user }}</p>
+        <p class="center">Welcome <b>{{ user }}</b></p>
 
         <div class="dashboard-grid">
 
@@ -26,7 +29,7 @@
 
                 <p>Symbolic + ANS + Working Memory</p>
 
-                <a href="{{ url_for('start_cognitive') }}" class="btn btn-primary">
+                <a href="{{ url_for('start_cognitive') }}" class="btn">
                     Start Assessment
                 </a>
 
@@ -36,7 +39,7 @@
 
                 <h3>View History</h3>
 
-                <p>See your previous results</p>
+                <p>See your previous test results</p>
 
                 <a href="{{ url_for('history') }}" class="btn btn-success">
                     View History
