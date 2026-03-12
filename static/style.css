@@ -418,3 +418,91 @@ RESPONSIVE
     }
 
 }
+
+/* =====================================================
+SYMBOLIC TEST LAYOUT (ADD ONLY – does not change old CSS)
+===================================================== */
+
+.symbolic-test-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.symbolic-title {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: #f1f5f9;
+}
+
+/* horizontal number layout */
+
+.symbolic-options {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 120px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+/* number buttons */
+
+.symbolic-btn {
+
+    font-size: 64px;
+    font-weight: 700;
+
+    padding: 45px 90px;
+
+    border-radius: 20px;
+
+    border: none;
+
+    background: linear-gradient(145deg, #2563eb, #1d4ed8);
+
+    color: white;
+
+    cursor: pointer;
+
+    transition: .25s;
+
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .6);
+
+}
+
+.symbolic-btn:hover {
+
+    transform: translateY(-6px) scale(1.05);
+
+    background: linear-gradient(145deg, #3b82f6, #2563eb);
+
+    box-shadow: 0 28px 60px rgba(0, 0, 0, .7);
+
+}
+
+.symbolic-btn:active {
+
+    transform: scale(.92);
+
+}
+
+
+/* mobile */
+
+@media(max-width:768px) {
+
+    .symbolic-options {
+        gap: 40px;
+    }
+
+    .symbolic-btn {
+        font-size: 42px;
+        padding: 30px 50px;
+    }
+
+}
