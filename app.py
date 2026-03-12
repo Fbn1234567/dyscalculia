@@ -18,26 +18,28 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 
-# -----------------------------
-# LOAD MODEL
-# -----------------------------
+# ---------------------------
+# LOAD ML MODEL
+# ---------------------------
 model = pickle.load(open("model.pkl","rb"))
 label_encoder = pickle.load(open("label_encoder.pkl","rb"))
 
 
-# -----------------------------
+# ---------------------------
 # HOME
-# -----------------------------
+# ---------------------------
 @app.route("/")
 def home():
+
     if "user" in session:
         return redirect("/dashboard")
+
     return redirect("/login")
 
 
-# -----------------------------
+# ---------------------------
 # LOGIN
-# -----------------------------
+# ---------------------------
 @app.route("/login",methods=["GET","POST"])
 def login():
 
@@ -62,14 +64,14 @@ def login():
 
             return redirect("/dashboard")
 
-        return render_template("login.html",error="Invalid credentials")
+        return render_template("login.html",error="Invalid login")
 
     return render_template("login.html")
 
 
-# -----------------------------
+# ---------------------------
 # DASHBOARD
-# -----------------------------
+# ---------------------------
 @app.route("/dashboard")
 def dashboard():
 
@@ -79,38 +81,40 @@ def dashboard():
     role=session["role"]
 
     if role=="Student":
-        return render_template("student_dashboard.html",user=session["user"])
+        return render_template("student_dashboard.html")
 
     if role=="Teacher":
-        return render_template("teacher_dashboard.html",user=session["user"])
+        return render_template("teacher_dashboard.html")
 
     if role=="Parent":
-        return render_template("parent_dashboard.html",user=session["user"])
+        return render_template("parent_dashboard.html")
 
-    if role=="Admin":
-        return render_template("admin_dashboard.html",user=session["user"])
+    return render_template("admin_dashboard.html")
 
 
-# -----------------------------
+# ---------------------------
 # LOGOUT
-# -----------------------------
+# ---------------------------
 @app.route("/logout")
 def logout():
+
     session.clear()
+
     return redirect("/login")
 
 
-# -----------------------------
+# ---------------------------
 # START TEST
-# -----------------------------
+# ---------------------------
 @app.route("/start_cognitive")
 def start_cognitive():
+
     return redirect("/symbolic_test")
 
 
-# =====================================================
-# SYMBOLIC NUMBER COMPARISON TEST
-# =====================================================
+# =================================================
+# SYMBOLIC TEST
+# =================================================
 
 @app.route("/symbolic_test")
 def symbolic_test():
@@ -156,9 +160,11 @@ def submit_symbolic():
     right=session["right"]
 
     correct="left" if left>right else "right"
+
     correct_val=1 if choice==correct else 0
 
     session["symbolic_data"].append({"correct":correct_val,"rt":rt})
+
     session["symbolic_trial"]+=1
 
     return redirect("/symbolic_trial")
@@ -169,18 +175,18 @@ def finish_symbolic():
 
     trials=session["symbolic_data"]
 
-    accuracy=sum(t["correct"] for t in trials)/len(trials)
-    mean_rt=sum(t["rt"] for t in trials)/len(trials)
+    acc=sum(t["correct"] for t in trials)/len(trials)
+    rt=sum(t["rt"] for t in trials)/len(trials)
 
-    session["Accuracy_SymbolicComp"]=accuracy
-    session["RTs_SymbolicComp"]=mean_rt
+    session["Accuracy_SymbolicComp"]=acc
+    session["RTs_SymbolicComp"]=rt
 
     return redirect("/ans_test")
 
 
-# =====================================================
-# ANS DOT COMPARISON TEST
-# =====================================================
+# =================================================
+# ANS TEST
+# =================================================
 
 @app.route("/ans_test")
 def ans_test():
@@ -226,9 +232,11 @@ def submit_ans():
     right=session["ans_right"]
 
     correct="left" if left>right else "right"
+
     correct_val=1 if choice==correct else 0
 
     session["ans_data"].append({"correct":correct_val,"rt":rt})
+
     session["ans_trial"]+=1
 
     return redirect("/ans_trial")
@@ -239,18 +247,18 @@ def finish_ans():
 
     trials=session["ans_data"]
 
-    accuracy=sum(t["correct"] for t in trials)/len(trials)
-    mean_rt=sum(t["rt"] for t in trials)/len(trials)
+    acc=sum(t["correct"] for t in trials)/len(trials)
+    rt=sum(t["rt"] for t in trials)/len(trials)
 
-    session["Mean_ACC_ANS"]=accuracy
-    session["Mean_RTs_ANS"]=mean_rt
+    session["Mean_ACC_ANS"]=acc
+    session["Mean_RTs_ANS"]=rt
 
     return redirect("/fraction_test")
 
 
-# =====================================================
+# =================================================
 # FRACTION TEST
-# =====================================================
+# =================================================
 
 @app.route("/fraction_test")
 def fraction_test():
@@ -290,15 +298,16 @@ def fraction_trial():
 def submit_fraction():
 
     choice=request.form["choice"]
-    rt=float(request.form["response_time"])
 
     a,b=session["frac_left"]
     c,d=session["frac_right"]
 
     correct="left" if (a/b)>(c/d) else "right"
+
     correct_val=1 if choice==correct else 0
 
-    session["fraction_data"].append({"correct":correct_val,"rt":rt})
+    session["fraction_data"].append({"correct":correct_val})
+
     session["fraction_trial"]+=1
 
     return redirect("/fraction_trial")
@@ -309,16 +318,16 @@ def finish_fraction():
 
     trials=session["fraction_data"]
 
-    accuracy=sum(t["correct"] for t in trials)/len(trials)
+    acc=sum(t["correct"] for t in trials)/len(trials)
 
-    session["Fraction_ACC"]=accuracy
+    session["Fraction_ACC"]=acc
 
     return redirect("/wm_test")
 
 
-# =====================================================
+# =================================================
 # WORKING MEMORY TEST
-# =====================================================
+# =================================================
 
 @app.route("/wm_test")
 def wm_test():
@@ -332,29 +341,36 @@ def wm_test():
 @app.route("/wm_trial")
 def wm_trial():
 
-    level=session["wm_level"]
+    level=session.get("wm_level",3)
 
-    sequence=[str(random.randint(1,9)) for _ in range(level)]
-    session["sequence"]=sequence
+    seq=[str(random.randint(1,9)) for _ in range(level)]
 
-    return render_template(
-        "wm_test.html",
-        sequence=" ".join(sequence)
-    )
+    session["sequence"]=seq
+
+    return render_template("wm_test.html",sequence=" ".join(seq))
 
 
 @app.route("/submit_wm",methods=["POST"])
 def submit_wm():
 
-    answer=request.form["answer"].replace(" ","")
+    if "sequence" not in session:
+        return redirect("/wm_test")
+
+    answer=request.form.get("answer","").replace(" ","")
+
     correct_seq="".join(session["sequence"])
 
     correct=1 if answer==correct_seq else 0
 
-    session["wm_data"].append({"level":session["wm_level"],"correct":correct})
+    data=session.get("wm_data",[])
+    level=session.get("wm_level",3)
+
+    data.append({"level":level,"correct":correct})
+
+    session["wm_data"]=data
 
     if correct:
-        session["wm_level"]+=1
+        session["wm_level"]=level+1
         return redirect("/wm_trial")
 
     return redirect("/finish_wm")
@@ -363,7 +379,8 @@ def submit_wm():
 @app.route("/finish_wm")
 def finish_wm():
 
-    data=session["wm_data"]
+    data=session.get("wm_data",[])
+
     scores=[d["level"] for d in data if d["correct"]==1]
 
     session["wm_K"]=max(scores) if scores else 0
@@ -371,9 +388,9 @@ def finish_wm():
     return redirect("/final_prediction")
 
 
-# =====================================================
-# FINAL ML PREDICTION
-# =====================================================
+# =================================================
+# FINAL PREDICTION
+# =================================================
 
 @app.route("/final_prediction")
 def final_prediction():
@@ -388,31 +405,21 @@ def final_prediction():
 
     ]])
 
-    prediction=model.predict(features)
+    pred=model.predict(features)
 
-    label=label_encoder.inverse_transform(prediction)[0].lower()
+    label=label_encoder.inverse_transform(pred)[0]
 
-    if label in ["dd","severe","high"]:
-        risk="Highest Risk"
-        rec="Immediate professional evaluation recommended."
+    return render_template("final_result.html",result=label)
 
-    elif label in ["moderate","medium"]:
-        risk="Medium Risk"
-        rec="Provide additional math practice and monitoring."
 
-    elif label in ["mild","low"]:
-        risk="Lowest Risk"
-        rec="Provide reinforcement activities."
+# =================================================
+# HISTORY
+# =================================================
 
-    else:
-        risk="No Dyscalculia Detected"
-        rec="Continue normal learning."
+@app.route("/history")
+def history():
 
-    return render_template(
-        "final_result.html",
-        risk=risk,
-        recommendations=rec
-    )
+    return render_template("history.html")
 
 
 if __name__=="__main__":
