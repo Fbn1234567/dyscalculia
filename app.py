@@ -68,56 +68,6 @@ def login():
 
 
 # -----------------------------
-# REGISTER
-# -----------------------------
-@app.route("/register",methods=["GET","POST"])
-def register():
-
-    conn=get_db_connection()
-    cur=conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("SELECT id,email FROM users WHERE role='Teacher'")
-    teachers=cur.fetchall()
-
-    cur.execute("SELECT id,email FROM users WHERE role='Parent'")
-    parents=cur.fetchall()
-
-    if request.method=="POST":
-
-        email=request.form["email"]
-        password=request.form["password"]
-        role=request.form["role"]
-
-        teacher_id=request.form.get("teacher_id")
-        parent_id=request.form.get("parent_id")
-
-        hashed=bcrypt.generate_password_hash(password).decode("utf-8")
-
-        if role=="Student":
-
-            cur.execute("""
-            INSERT INTO users(email,password,role,teacher_id,parent_id)
-            VALUES(%s,%s,%s,%s,%s)
-            """,(email,hashed,role,teacher_id,parent_id))
-
-        else:
-
-            cur.execute("""
-            INSERT INTO users(email,password,role)
-            VALUES(%s,%s,%s)
-            """,(email,hashed,role))
-
-        conn.commit()
-
-        cur.close()
-        conn.close()
-
-        return redirect("/login")
-
-    return render_template("register.html",teachers=teachers,parents=parents)
-
-
-# -----------------------------
 # DASHBOARD
 # -----------------------------
 @app.route("/dashboard")
@@ -159,7 +109,7 @@ def start_cognitive():
 
 
 # =====================================================
-# SYMBOLIC NUMBER COMPARISON TEST
+# SYMBOLIC NUMBER COMPARISON
 # =====================================================
 
 @app.route("/symbolic_test")
@@ -228,7 +178,7 @@ def finish_symbolic():
 
 
 # =====================================================
-# ANS DOT COMPARISON TEST
+# ANS TEST
 # =====================================================
 
 @app.route("/ans_test")
@@ -317,16 +267,27 @@ def distance_trial():
     if trial>=10:
         return redirect("/finish_distance")
 
-    left=random.randint(1,50)
-    right=random.randint(1,50)
+    # create small distance or large distance trials
+    if random.random() < 0.5:
 
-    while left==right:
-        right=random.randint(1,50)
+        base=random.randint(1,8)
+        left=base
+        right=base+1
+
+    else:
+
+        left=random.randint(1,4)
+        right=random.randint(7,10)
+
+    if random.random() < 0.5:
+        left,right=right,left
 
     session["dist_left"]=left
     session["dist_right"]=right
+    session["distance_value"]=abs(left-right)
 
-    return render_template("distance_test.html",
+    return render_template(
+        "distance_test.html",
         left=left,
         right=right,
         trial=trial+1
@@ -345,7 +306,12 @@ def submit_distance():
     correct="left" if left>right else "right"
     correct_val=1 if choice==correct else 0
 
-    session["distance_data"].append({"correct":correct_val,"rt":rt})
+    session["distance_data"].append({
+        "correct":correct_val,
+        "rt":rt,
+        "distance":session["distance_value"]
+    })
+
     session["distance_trial"]+=1
 
     return redirect("/distance_trial")
@@ -388,13 +354,15 @@ def fraction_trial():
 
     a=random.randint(1,9)
     b=random.randint(2,10)
+
     c=random.randint(1,9)
     d=random.randint(2,10)
 
     session["frac_left"]=(a,b)
     session["frac_right"]=(c,d)
 
-    return render_template("fraction_test.html",
+    return render_template(
+        "fraction_test.html",
         left=f"{a}/{b}",
         right=f"{c}/{d}",
         trial=trial+1
@@ -432,7 +400,7 @@ def finish_fraction():
 
 
 # =====================================================
-# WORKING MEMORY TEST
+# WORKING MEMORY
 # =====================================================
 
 @app.route("/wm_test")
@@ -452,7 +420,8 @@ def wm_trial():
     sequence=[str(random.randint(1,9)) for _ in range(level)]
     session["sequence"]=sequence
 
-    return render_template("wm_test.html",
+    return render_template(
+        "wm_test.html",
         sequence=" ".join(sequence)
     )
 
@@ -486,7 +455,7 @@ def finish_wm():
 
 
 # =====================================================
-# FINAL ML PREDICTION
+# FINAL PREDICTION
 # =====================================================
 
 @app.route("/final_prediction")
@@ -519,27 +488,8 @@ def final_prediction():
         risk="No Dyscalculia Detected"
         rec="Continue normal learning."
 
-    conn=get_db_connection()
-    cur=conn.cursor()
-
-    cur.execute("""
-    INSERT INTO results(student_email,ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level)
-    VALUES(%s,%s,%s,%s,%s,%s,%s)
-    """,(
-        session["user"],
-        session["Mean_ACC_ANS"],
-        session["Mean_RTs_ANS"],
-        session["wm_K"],
-        session["Accuracy_SymbolicComp"],
-        session["RTs_SymbolicComp"],
-        risk
-    ))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return render_template("final_result.html",
+    return render_template(
+        "final_result.html",
         risk=risk,
         recommendations=rec
     )
