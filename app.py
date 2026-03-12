@@ -15,6 +15,9 @@ bcrypt = Bcrypt(app)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
+# -----------------------------
+# DATABASE CONNECTION
+# -----------------------------
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
@@ -27,7 +30,7 @@ label_encoder = pickle.load(open("models/label_encoder.pkl", "rb"))
 
 
 # -----------------------------
-# HOME → always login page
+# HOME → always login
 # -----------------------------
 @app.route("/")
 def home():
@@ -96,9 +99,9 @@ def register():
 
             cur.execute(
                 """
-            INSERT INTO users(email,password,role,teacher_id,parent_id)
-            VALUES(%s,%s,%s,%s,%s)
-            """,
+                INSERT INTO users(email,password,role,teacher_id,parent_id)
+                VALUES(%s,%s,%s,%s,%s)
+                """,
                 (email, hashed, role, teacher_id, parent_id),
             )
 
@@ -106,9 +109,9 @@ def register():
 
             cur.execute(
                 """
-            INSERT INTO users(email,password,role)
-            VALUES(%s,%s,%s)
-            """,
+                INSERT INTO users(email,password,role)
+                VALUES(%s,%s,%s)
+                """,
                 (email, hashed, role),
             )
 
@@ -150,7 +153,6 @@ def dashboard():
 # -----------------------------
 @app.route("/logout")
 def logout():
-
     session.clear()
     return redirect("/login")
 
@@ -362,17 +364,15 @@ def finish_wm():
 @app.route("/final_prediction")
 def final_prediction():
 
-    features = np.array(
+    features = np.array([
         [
-            [
-                session["Mean_ACC_ANS"],
-                session["Mean_RTs_ANS"],
-                session["wm_K"],
-                session["Accuracy_SymbolicComp"],
-                session["RTs_SymbolicComp"],
-            ]
+            session["Mean_ACC_ANS"],
+            session["Mean_RTs_ANS"],
+            session["wm_K"],
+            session["Accuracy_SymbolicComp"],
+            session["RTs_SymbolicComp"],
         ]
-    )
+    ])
 
     prediction = model.predict(features)
     probability = model.predict_proba(features)
@@ -401,9 +401,9 @@ def final_prediction():
 
     cur.execute(
         """
-    INSERT INTO results(student_email,ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level)
-    VALUES(%s,%s,%s,%s,%s,%s,%s)
-    """,
+        INSERT INTO results(student_email,ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level)
+        VALUES(%s,%s,%s,%s,%s,%s,%s)
+        """,
         (
             session["user"],
             session["Mean_ACC_ANS"],
@@ -427,5 +427,9 @@ def final_prediction():
     )
 
 
+# -----------------------------
+# RUN APP (Render Compatible)
+# -----------------------------
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
