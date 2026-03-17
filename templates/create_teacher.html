@@ -3,51 +3,52 @@
 
 <head>
 
-<title>Create Teacher</title>
+    <title>Create Teacher</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
 <body>
 
-<div class="navbar">
-Dyscalculia Detection System
-</div>
+    <div class="navbar">
+        Dyscalculia Detection System
+    </div>
 
-<div class="container">
+    <div class="container">
 
-<div class="card">
+        <div class="card">
 
-<h2>Create Teacher Account</h2>
+            <h2>Create Teacher Account</h2>
 
-<form method="post">
+            <form method="post">
 
-<div class="form-group">
-<input name="email" placeholder="Teacher Email" required>
-</div>
+                <div class="form-group">
+                    <input name="email" placeholder="Teacher Email" required>
+                </div>
 
-<div class="form-group">
-<input type="password" name="password" placeholder="Password" required>
-</div>
+                <div class="form-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
 
-<br>
+                <br>
 
-<button class="btn btn-primary">
-Create Teacher
-</button>
+                <button class="btn btn-primary">
+                    Create Teacher
+                </button>
 
-</form>
+            </form>
 
-<br>
+            <br>
 
-<a href="/dashboard" class="btn btn-danger">
-Back to Dashboard
-</a>
+            <a href="/dashboard" class="btn btn-danger">
+                Back to Dashboard
+            </a>
 
-</div>
+        </div>
 
-</div>
+    </div>
 
 </body>
+
 </html>

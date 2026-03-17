@@ -3,41 +3,42 @@
 
 <head>
 
-<title>Parent Dashboard</title>
+    <title>Parent Dashboard</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
 <body>
 
-<div class="navbar">
-Dyscalculia Detection System
-</div>
+    <div class="navbar">
+        Dyscalculia Detection System
+    </div>
 
-<div class="container">
+    <div class="container">
 
-<div class="card center">
+        <div class="card center">
 
-<h2>Parent Dashboard</h2>
+            <h2>Parent Dashboard</h2>
 
-<p>Welcome <b>{{ user }}</b></p>
+            <p>Welcome <b>{{ user }}</b></p>
 
-<br>
+            <br>
 
-<a href="/history" class="btn btn-primary">
-View Child Test History
-</a>
+            <a href="/history" class="btn btn-primary">
+                View Child Test History
+            </a>
 
-<br><br>
+            <br><br>
 
-<a href="/logout" class="btn btn-danger">
-Logout
-</a>
+            <a href="/logout" class="btn btn-danger">
+                Logout
+            </a>
 
-</div>
+        </div>
 
-</div>
+    </div>
 
 </body>
+
 </html>

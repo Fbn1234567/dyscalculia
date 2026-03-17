@@ -3,41 +3,42 @@
 
 <head>
 
-<title>Admin Dashboard</title>
+    <title>Admin Dashboard</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
 <body>
 
-<div class="navbar">
-Dyscalculia Detection System
-</div>
+    <div class="navbar">
+        Dyscalculia Detection System
+    </div>
 
-<div class="container">
+    <div class="container">
 
-<div class="card">
+        <div class="card">
 
-<h2>Admin Dashboard</h2>
+            <h2>Admin Dashboard</h2>
 
-<p>Welcome <b>{{ user }}</b></p>
+            <p>Welcome <b>{{ user }}</b></p>
 
-<br>
+            <br>
 
-<a href="/create_teacher" class="btn btn-primary">
-Create Teacher
-</a>
+            <a href="/create_teacher" class="btn btn-primary">
+                Create Teacher
+            </a>
 
-<br><br>
+            <br><br>
 
-<a href="/logout" class="btn btn-danger">
-Logout
-</a>
+            <a href="/logout" class="btn btn-danger">
+                Logout
+            </a>
 
-</div>
+        </div>
 
-</div>
+    </div>
 
 </body>
+
 </html>
