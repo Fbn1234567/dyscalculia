@@ -26,29 +26,39 @@ def release_db_connection(conn):
 
 
 # -----------------------------
-# ML MODEL LOADING
+# ML MODEL LAZY LOADING
 # -----------------------------
 model = None
 label_encoder = None
+
 
 def load_model():
     global model, label_encoder
 
     if model is None:
+
         import pickle
+        import numpy as np
+
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-        model = pickle.load(open(os.path.join(BASE_DIR, "models", "model.pkl"), "rb"))
-        label_encoder = pickle.load(open(os.path.join(BASE_DIR, "models", "label_encoder.pkl"), "rb"))
+        model = pickle.load(
+            open(os.path.join(BASE_DIR, "models", "model.pkl"), "rb")
+        )
+
+        label_encoder = pickle.load(
+            open(os.path.join(BASE_DIR, "models", "label_encoder.pkl"), "rb")
+        )
 
     return model, label_encoder
 
-# ✅ preload
+
+# ✅ PRELOAD MODEL
 model, label_encoder = load_model()
 
 
 # -----------------------------
-# HOME
+# HOME → LOGIN
 # -----------------------------
 @app.route("/")
 def home():
@@ -62,6 +72,7 @@ def home():
 def login():
 
     if request.method == "POST":
+
         email = request.form["email"]
         password = request.form["password"]
 
@@ -75,6 +86,7 @@ def login():
         release_db_connection(conn)
 
         if user and bcrypt.check_password_hash(user["password"], password):
+
             session["user"] = user["email"]
             session["role"] = user["role"]
             session["age"] = int(user["age"])
@@ -102,6 +114,7 @@ def register():
     parents = cur.fetchall()
 
     if request.method == "POST":
+
         email = request.form["email"]
         password = request.form["password"]
         role = request.form["role"]
@@ -113,15 +126,24 @@ def register():
         hashed = bcrypt.generate_password_hash(password).decode("utf-8")
 
         if role == "Student":
-            cur.execute("""
+
+            cur.execute(
+                """
                 INSERT INTO users(email,password,role,age,teacher_id,parent_id)
                 VALUES(%s,%s,%s,%s,%s,%s)
-            """, (email, hashed, role, age, teacher_id, parent_id))
+                """,
+                (email, hashed, role, age, teacher_id, parent_id),
+            )
+
         else:
-            cur.execute("""
+
+            cur.execute(
+                """
                 INSERT INTO users(email,password,role,age)
                 VALUES(%s,%s,%s,%s)
-            """, (email, hashed, role, age))
+                """,
+                (email, hashed, role, age),
+            )
 
         conn.commit()
         cur.close()
@@ -172,6 +194,7 @@ def logout():
 def create_teacher():
 
     if request.method == "POST":
+
         email = request.form["email"]
         password = request.form["password"]
 
@@ -180,10 +203,13 @@ def create_teacher():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO users(email,password,role)
             VALUES(%s,%s,'Teacher')
-        """, (email, hashed))
+            """,
+            (email, hashed),
+        )
 
         conn.commit()
         cur.close()
@@ -211,8 +237,10 @@ def start_cognitive():
 # -----------------------------
 @app.route("/symbolic_test")
 def symbolic_test():
+
     session["symbolic_data"] = []
     session["symbolic_trial"] = 0
+
     return redirect("/symbolic_trial")
 
 
@@ -233,7 +261,12 @@ def symbolic_trial():
     session["left"] = left
     session["right"] = right
 
-    return render_template("symbolic_test.html", left=left, right=right, trial=trial + 1)
+    return render_template(
+        "symbolic_test.html",
+        left=left,
+        right=right,
+        trial=trial + 1,
+    )
 
 
 @app.route("/submit_symbolic", methods=["POST"])
@@ -273,8 +306,10 @@ def finish_symbolic():
 # -----------------------------
 @app.route("/fraction_test")
 def fraction_test():
+
     session["frac_data"] = []
     session["frac_trial"] = 0
+
     return redirect("/fraction_trial")
 
 
@@ -298,10 +333,12 @@ def fraction_trial():
     session["frac_left"] = (a, b)
     session["frac_right"] = (c, d)
 
-    return render_template("fraction_test.html",
-                           left=f"{a}/{b}",
-                           right=f"{c}/{d}",
-                           trial=trial + 1)
+    return render_template(
+        "fraction_test.html",
+        left=f"{a}/{b}",
+        right=f"{c}/{d}",
+        trial=trial + 1,
+    )
 
 
 @app.route("/submit_fraction", methods=["POST"])
@@ -344,8 +381,10 @@ def finish_fraction():
 # -----------------------------
 @app.route("/ans_test")
 def ans_test():
+
     session["ans_data"] = []
     session["ans_trial"] = 0
+
     return redirect("/ans_trial")
 
 
@@ -366,7 +405,12 @@ def ans_trial():
     session["ans_left"] = left
     session["ans_right"] = right
 
-    return render_template("ans_test.html", left=left, right=right, trial=trial + 1)
+    return render_template(
+        "ans_test.html",
+        left=left,
+        right=right,
+        trial=trial + 1,
+    )
 
 
 @app.route("/submit_ans", methods=["POST"])
@@ -406,8 +450,10 @@ def finish_ans():
 # -----------------------------
 @app.route("/wm_test")
 def wm_test():
+
     session["wm_level"] = 3
     session["wm_data"] = []
+
     return redirect("/wm_trial")
 
 
@@ -492,84 +538,15 @@ def final_prediction():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(
+        """
         INSERT INTO results(student_email,ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level)
         VALUES(%s,%s,%s,%s,%s,%s,%s)
-    """, (
-        session["user"],
-        session.get("Mean_ACC_ANS", 0),
-        session.get("Mean_RTs_ANS", 0),
-        session.get("wm_K", 0),
-        session.get("Accuracy_SymbolicComp", 0),
-        session.get("RTs_SymbolicComp", 0),
-        risk
-    ))
-
-    conn.commit()
-    cur.close()
-    release_db_connection(conn)
-
-    return render_template("final_result.html",
-                           risk=risk,
-                           confidence=confidence,
-                           recommendations=rec)
-
-
-# -----------------------------
-# HISTORY
-# -----------------------------
-@app.route("/history")
-def history():
-
-    if "user" not in session:
-        return redirect("/login")
-
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("""
-        SELECT ans_acc,ans_rt,wm_k,sym_acc,sym_rt,risk_level,created_at
-        FROM results
-        WHERE student_email=%s
-        ORDER BY created_at DESC
-    """, (session["user"],))
-
-    results = cur.fetchall()
-
-    cur.close()
-    release_db_connection(conn)
-
-    return render_template("history.html", results=results)
-
-
-# -----------------------------
-# TEACHER RESULTS
-# -----------------------------
-@app.route("/teacher_results")
-def teacher_results():
-
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    cur.execute("""
-        SELECT student_email,risk_level,created_at
-        FROM results
-        ORDER BY created_at DESC
-    """)
-
-    results = cur.fetchall()
-
-    cur.close()
-    release_db_connection(conn)
-
-    return render_template("teacher_results.html", results=results)
-
-
-# -----------------------------
-# RUN APP
-# -----------------------------
-if __name__ == "__main__":
-    app.run()ession.get("Mean_RTs_ANS", 0),
+        """,
+        (
+            session["user"],
+            session.get("Mean_ACC_ANS", 0),
+            session.get("Mean_RTs_ANS", 0),
             session.get("wm_K", 0),
             session.get("Accuracy_SymbolicComp", 0),
             session.get("RTs_SymbolicComp", 0),
@@ -579,7 +556,7 @@ if __name__ == "__main__":
 
     conn.commit()
     cur.close()
-    conn.close()
+    release_db_connection(conn)
 
     return render_template(
         "final_result.html",
@@ -614,7 +591,7 @@ def history():
     results = cur.fetchall()
 
     cur.close()
-    conn.close()
+    release_db_connection(conn)
 
     return render_template("history.html", results=results)
 
@@ -639,7 +616,7 @@ def teacher_results():
     results = cur.fetchall()
 
     cur.close()
-    conn.close()
+    release_db_connection(conn)
 
     return render_template("teacher_results.html", results=results)
 
