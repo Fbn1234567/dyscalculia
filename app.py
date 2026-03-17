@@ -14,9 +14,13 @@ bcrypt = Bcrypt(app)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # -----------------------------
-# DATABASE CONNECTION (POOLING)
+# DATABASE CONNECTION (POOLING) ✅ FIXED SSL
 # -----------------------------
-pool = SimpleConnectionPool(1, 10, DATABASE_URL, sslmode="require")
+pool = SimpleConnectionPool(
+    1,
+    10,
+    dsn=DATABASE_URL + "?sslmode=require"
+)
 
 def get_db_connection():
     return pool.getconn()
@@ -31,29 +35,18 @@ def release_db_connection(conn):
 model = None
 label_encoder = None
 
-
 def load_model():
     global model, label_encoder
 
     if model is None:
-
         import pickle
-        import numpy as np
-
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-        model = pickle.load(
-            open(os.path.join(BASE_DIR, "models", "model.pkl"), "rb")
-        )
-
-        label_encoder = pickle.load(
-            open(os.path.join(BASE_DIR, "models", "label_encoder.pkl"), "rb")
-        )
+        model = pickle.load(open(os.path.join(BASE_DIR, "models", "model.pkl"), "rb"))
+        label_encoder = pickle.load(open(os.path.join(BASE_DIR, "models", "label_encoder.pkl"), "rb"))
 
     return model, label_encoder
 
-
-# ✅ PRELOAD MODEL
 model, label_encoder = load_model()
 
 
@@ -150,6 +143,10 @@ def register():
         release_db_connection(conn)
 
         return redirect("/login")
+
+    # ✅ FIX: close connection on GET
+    cur.close()
+    release_db_connection(conn)
 
     return render_template("register.html", teachers=teachers, parents=parents)
 
