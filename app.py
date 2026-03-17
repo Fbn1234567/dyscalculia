@@ -92,7 +92,7 @@ def login():
 
             session["user"] = user["email"]
             session["role"] = user["role"]
-            session["age"] = int(user.get("age", 0))
+            session["age"] = int(user.get("age") or 0)
 
             return redirect("/dashboard")
 
