@@ -14,12 +14,14 @@ bcrypt = Bcrypt(app)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 # -----------------------------
-# DATABASE CONNECTION (POOLING) ✅ FIXED SSL
+# DATABASE CONNECTION (FIXED)
 # -----------------------------
 pool = SimpleConnectionPool(
     1,
-    10,
-    dsn=DATABASE_URL + "?sslmode=require"
+    5,
+    dsn=DATABASE_URL,
+    sslmode="require",
+    connect_timeout=5
 )
 
 def get_db_connection():
@@ -47,11 +49,9 @@ def load_model():
 
     return model, label_encoder
 
-model, label_encoder = load_model()
-
 
 # -----------------------------
-# HOME → LOGIN
+# HOME
 # -----------------------------
 @app.route("/")
 def home():
@@ -82,7 +82,7 @@ def login():
 
             session["user"] = user["email"]
             session["role"] = user["role"]
-            session["age"] = int(user["age"])
+            session["age"] = int(user.get("age", 0))
 
             return redirect("/dashboard")
 
@@ -144,7 +144,6 @@ def register():
 
         return redirect("/login")
 
-    # ✅ FIX: close connection on GET
     cur.close()
     release_db_connection(conn)
 
@@ -234,10 +233,8 @@ def start_cognitive():
 # -----------------------------
 @app.route("/symbolic_test")
 def symbolic_test():
-
     session["symbolic_data"] = []
     session["symbolic_trial"] = 0
-
     return redirect("/symbolic_trial")
 
 
@@ -258,12 +255,7 @@ def symbolic_trial():
     session["left"] = left
     session["right"] = right
 
-    return render_template(
-        "symbolic_test.html",
-        left=left,
-        right=right,
-        trial=trial + 1,
-    )
+    return render_template("symbolic_test.html", left=left, right=right, trial=trial + 1)
 
 
 @app.route("/submit_symbolic", methods=["POST"])
@@ -303,10 +295,8 @@ def finish_symbolic():
 # -----------------------------
 @app.route("/fraction_test")
 def fraction_test():
-
     session["frac_data"] = []
     session["frac_trial"] = 0
-
     return redirect("/fraction_trial")
 
 
@@ -378,10 +368,8 @@ def finish_fraction():
 # -----------------------------
 @app.route("/ans_test")
 def ans_test():
-
     session["ans_data"] = []
     session["ans_trial"] = 0
-
     return redirect("/ans_trial")
 
 
@@ -402,12 +390,7 @@ def ans_trial():
     session["ans_left"] = left
     session["ans_right"] = right
 
-    return render_template(
-        "ans_test.html",
-        left=left,
-        right=right,
-        trial=trial + 1,
-    )
+    return render_template("ans_test.html", left=left, right=right, trial=trial + 1)
 
 
 @app.route("/submit_ans", methods=["POST"])
@@ -447,10 +430,8 @@ def finish_ans():
 # -----------------------------
 @app.route("/wm_test")
 def wm_test():
-
     session["wm_level"] = 3
     session["wm_data"] = []
-
     return redirect("/wm_trial")
 
 
@@ -498,6 +479,8 @@ def finish_wm():
 # -----------------------------
 @app.route("/final_prediction")
 def final_prediction():
+
+    model, label_encoder = load_model()
 
     import numpy as np
 
