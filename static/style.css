@@ -1,4 +1,3 @@
-Styles · CSS Copy
 /* ===============================
    IMPORT FONTS
 =============================== */
@@ -7,33 +6,39 @@ Styles · CSS Copy
 
 /* ===============================
    DESIGN TOKENS
-   Single source of truth for colours / surfaces
 =============================== */
 
 :root {
-    --bg-base: #0f172a;
-    --bg-surface: rgba(30, 41, 59, 0.88);
-    /* cards, rows, inputs */
-    --bg-surface-alt: rgba(17, 24, 39, 0.95);
-    /* table header, navbar */
+    --bg-base: #f0f4ff;
+    --bg-surface: #ffffff;
+    --bg-surface-alt: #e8eef8;
+    --bg-navbar: #1e3a8a;
 
-    --border: rgba(255, 255, 255, 0.07);
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --text-on-dark: #ffffff;
 
-    --shadow-md: 0 15px 40px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 25px 55px rgba(0, 0, 0, 0.55);
-    --shadow-xl: 0 30px 65px rgba(0, 0, 0, 0.65);
-
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    --border: #cbd5e1;
+    --border-focus: #3b82f6;
 
     --blue: #3b82f6;
     --blue-dark: #2563eb;
+    --blue-deep: #1e3a8a;
     --red: #ef4444;
     --red-dark: #dc2626;
     --green: #22c55e;
     --green-dark: #16a34a;
     --yellow: #f59e0b;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.10);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.13);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
 }
 
 /* ===============================
@@ -50,8 +55,8 @@ Styles · CSS Copy
 
 body {
     font-family: "Inter", sans-serif;
-    background: linear-gradient(135deg, var(--bg-base), #1e293b, var(--bg-base));
-    color: #e2e8f0;
+    background: var(--bg-base);
+    color: var(--text-primary);
     min-height: 100vh;
 }
 
@@ -68,11 +73,11 @@ body {
     font-weight: 600;
     font-family: "Poppins", sans-serif;
 
-    background: var(--bg-surface-alt);
-    backdrop-filter: blur(10px);
+    background: var(--bg-navbar);
+    color: var(--text-on-dark);
 
-    border-bottom: 1px solid var(--border);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-md);
 }
 
 /* ===============================
@@ -82,7 +87,7 @@ body {
 .container {
     width: 90%;
     max-width: 1100px;
-    margin: 80px auto;
+    margin: 60px auto;
     animation: fadeIn .6s ease;
 }
 
@@ -97,6 +102,7 @@ h3 {
     font-family: "Poppins", sans-serif;
     font-weight: 600;
     margin-bottom: 20px;
+    color: var(--text-primary);
 }
 
 h1 {
@@ -109,11 +115,28 @@ h2 {
 
 h3 {
     font-size: 20px;
-    color: #cbd5e1;
+    color: var(--text-secondary);
 }
 
 .center {
     text-align: center;
+}
+
+/* ===============================
+   LABELS
+=============================== */
+
+label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    margin-top: 4px;
+}
+
+.form-group {
+    margin-bottom: 4px;
 }
 
 /* ===============================
@@ -122,7 +145,6 @@ h3 {
 
 .card {
     background: var(--bg-surface);
-    backdrop-filter: blur(10px);
     padding: 40px;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
@@ -157,16 +179,15 @@ h3 {
 }
 
 .dashboard-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
     box-shadow: var(--shadow-xl);
 }
 
-/* sweep-glow on hover */
 .dashboard-card::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, .08), transparent);
+    background: linear-gradient(120deg, transparent, rgba(59, 130, 246, .06), transparent);
     opacity: 0;
     transition: opacity .4s;
     pointer-events: none;
@@ -199,7 +220,11 @@ h3 {
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, .45);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, .35);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--blue), var(--blue-dark));
 }
 
 .btn-danger {
@@ -207,7 +232,7 @@ h3 {
 }
 
 .btn-danger:hover {
-    box-shadow: 0 8px 20px rgba(239, 68, 68, .45);
+    box-shadow: 0 8px 20px rgba(239, 68, 68, .35);
 }
 
 .btn-success {
@@ -215,7 +240,7 @@ h3 {
 }
 
 .btn-success:hover {
-    box-shadow: 0 8px 20px rgba(34, 197, 94, .45);
+    box-shadow: 0 8px 20px rgba(34, 197, 94, .35);
 }
 
 /* ===============================
@@ -239,7 +264,7 @@ h3 {
 
 .back-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(59, 130, 246, .45);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, .35);
 }
 
 /* ===============================
@@ -250,13 +275,12 @@ input,
 select {
     width: 100%;
     padding: 12px 14px;
-    margin-top: 10px;
-    margin-bottom: 20px;
-    border-radius: 10px;
+    margin-top: 6px;
+    margin-bottom: 16px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--bg-surface);
-    /* unified — was hard-coded #020617 */
-    color: white;
+    color: var(--text-primary);
     font-size: 14px;
     transition: border .25s, box-shadow .25s;
 }
@@ -264,8 +288,12 @@ select {
 input:focus,
 select:focus {
     outline: none;
-    border-color: var(--blue);
-    box-shadow: 0 0 10px rgba(59, 130, 246, .4);
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+}
+
+input::placeholder {
+    color: var(--text-muted);
 }
 
 /* ===============================
@@ -275,42 +303,47 @@ select:focus {
 .history-table {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 10px;
+    border-spacing: 0 8px;
     font-size: 15px;
-    color: #e5e7eb;
+    color: var(--text-primary);
     margin-top: 30px;
 }
 
 .history-table th {
     background: var(--bg-surface-alt);
-    color: #f9fafb;
+    color: var(--text-secondary);
     padding: 14px;
     text-align: center;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
 }
 
 .history-table td {
     background: var(--bg-surface);
     padding: 14px;
     text-align: center;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
-/* rounded row ends */
 .history-table td:first-child {
+    border-left: 1px solid var(--border);
     border-radius: var(--radius-sm) 0 0 var(--radius-sm);
 }
 
 .history-table td:last-child {
+    border-right: 1px solid var(--border);
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .history-table tr:hover td {
-    background: rgba(59, 130, 246, .18);
+    background: #eff6ff;
 }
 
 /* ===============================
-   RISK BADGES  (single definition)
+   RISK BADGES
 =============================== */
 
 .risk-high,
@@ -330,6 +363,7 @@ select:focus {
 
 .risk-medium {
     background: var(--yellow);
+    color: #1e293b;
 }
 
 .risk-low {
@@ -374,7 +408,7 @@ select:focus {
     font-size: 36px;
     font-weight: 700;
     letter-spacing: .5px;
-    color: #f1f5f9;
+    color: var(--text-primary);
 }
 
 .symbolic-options {
@@ -392,19 +426,19 @@ select:focus {
     font-weight: 700;
     padding: 45px 90px;
     border-radius: 20px;
-    border: none;
+    border: 2px solid var(--border);
     background: var(--bg-surface);
-    /* unified surface instead of hard blue */
-    border: 1px solid var(--border);
-    color: white;
+    color: var(--text-primary);
     cursor: pointer;
-    transition: transform .25s, box-shadow .25s, background .25s;
+    transition: transform .25s, box-shadow .25s, background .25s, color .25s;
     box-shadow: var(--shadow-md);
 }
 
 .symbolic-btn:hover {
     transform: translateY(-6px) scale(1.05);
     background: linear-gradient(145deg, var(--blue), var(--blue-dark));
+    color: white;
+    border-color: transparent;
     box-shadow: var(--shadow-xl);
 }
 
