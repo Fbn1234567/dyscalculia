@@ -80,6 +80,7 @@ def login():
 
             session["user"] = user["email"]
             session["role"] = user["role"]
+            session["age"] = int(user["age"])   # ✅ ensure int
 
             return redirect("/dashboard")
 
@@ -108,6 +109,7 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
         role = request.form["role"]
+        age = int(request.form["age"])   # ✅ FIX
 
         teacher_id = request.form.get("teacher_id")
         parent_id = request.form.get("parent_id")
@@ -118,20 +120,20 @@ def register():
 
             cur.execute(
                 """
-                INSERT INTO users(email,password,role,teacher_id,parent_id)
-                VALUES(%s,%s,%s,%s,%s)
+                INSERT INTO users(email,password,role,age,teacher_id,parent_id)
+                VALUES(%s,%s,%s,%s,%s,%s)
                 """,
-                (email, hashed, role, teacher_id, parent_id),
+                (email, hashed, role, age, teacher_id, parent_id),
             )
 
         else:
 
             cur.execute(
                 """
-                INSERT INTO users(email,password,role)
-                VALUES(%s,%s,%s)
+                INSERT INTO users(email,password,role,age)
+                VALUES(%s,%s,%s,%s)
                 """,
-                (email, hashed, role),
+                (email, hashed, role, age),
             )
 
         conn.commit()
@@ -210,7 +212,7 @@ def create_teacher():
 
 
 # -----------------------------
-# START TEST
+# START TEST (FIXED FLOW)
 # -----------------------------
 @app.route("/start_cognitive")
 def start_cognitive():
@@ -218,7 +220,7 @@ def start_cognitive():
     if "user" not in session:
         return redirect("/login")
 
-    return redirect("/symbolic_test")
+    return redirect("/symbolic_test")   # ✅ FIX
 
 
 # -----------------------------
@@ -238,7 +240,7 @@ def symbolic_trial():
 
     trial = session.get("symbolic_trial", 0)
 
-    if trial >= 10:
+    if trial >= 5:
         return redirect("/finish_symbolic")
 
     left = random.randint(1, 50)
@@ -287,6 +289,81 @@ def finish_symbolic():
     session["Accuracy_SymbolicComp"] = accuracy
     session["RTs_SymbolicComp"] = mean_rt
 
+    return redirect("/fraction_test")
+
+
+# -----------------------------
+# FRACTION TEST
+# -----------------------------
+@app.route("/fraction_test")
+def fraction_test():
+
+    session["frac_data"] = []
+    session["frac_trial"] = 0
+
+    return redirect("/fraction_trial")
+
+
+@app.route("/fraction_trial")
+def fraction_trial():
+
+    trial = session["frac_trial"]
+
+    if trial >= 5:
+        return redirect("/finish_fraction")
+
+    a = random.randint(1, 9)
+    b = random.randint(2, 10)
+    c = random.randint(1, 9)
+    d = random.randint(2, 10)
+
+    while a / b == c / d:
+        c = random.randint(1, 9)
+        d = random.randint(2, 10)
+
+    session["frac_left"] = (a, b)
+    session["frac_right"] = (c, d)
+
+    return render_template(
+        "fraction_test.html",
+        left=f"{a}/{b}",
+        right=f"{c}/{d}",
+        trial=trial + 1,
+    )
+
+
+@app.route("/submit_fraction", methods=["POST"])
+def submit_fraction():
+
+    choice = request.form["choice"]
+    rt = float(request.form["response_time"])
+
+    a, b = session["frac_left"]
+    c, d = session["frac_right"]
+
+    correct = "left" if a / b > c / d else "right"
+    correct_val = 1 if choice == correct else 0
+
+    session["frac_data"].append({"correct": correct_val, "rt": rt})
+    session["frac_trial"] += 1
+
+    return redirect("/fraction_trial")
+
+
+@app.route("/finish_fraction")
+def finish_fraction():
+
+    trials = session["frac_data"]
+
+    accuracy = sum(t["correct"] for t in trials) / len(trials)
+    mean_rt = sum(t["rt"] for t in trials) / len(trials)
+
+    session["Accuracy_Fraction"] = accuracy
+    session["RTs_Fraction"] = mean_rt
+
+    if session["age"] < 10:
+        return redirect("/final_prediction")
+
     return redirect("/ans_test")
 
 
@@ -307,7 +384,7 @@ def ans_trial():
 
     trial = session["ans_trial"]
 
-    if trial >= 10:
+    if trial >= 5:
         return redirect("/finish_ans")
 
     left = random.randint(5, 20)
@@ -422,11 +499,13 @@ def final_prediction():
 
     features = np.array([
         [
-            session["Mean_ACC_ANS"],
-            session["Mean_RTs_ANS"],
-            session["wm_K"],
-            session["Accuracy_SymbolicComp"],
-            session["RTs_SymbolicComp"],
+            session.get("Mean_ACC_ANS", 0),
+            session.get("Mean_RTs_ANS", 0),
+            session.get("wm_K", 0),
+            session.get("Accuracy_SymbolicComp", 0),
+            session.get("RTs_SymbolicComp", 0),
+            session.get("Accuracy_Fraction", 0),
+            session.get("RTs_Fraction", 0),
         ]
     ])
 
@@ -462,11 +541,11 @@ def final_prediction():
         """,
         (
             session["user"],
-            session["Mean_ACC_ANS"],
-            session["Mean_RTs_ANS"],
-            session["wm_K"],
-            session["Accuracy_SymbolicComp"],
-            session["RTs_SymbolicComp"],
+            session.get("Mean_ACC_ANS", 0),
+            session.get("Mean_RTs_ANS", 0),
+            session.get("wm_K", 0),
+            session.get("Accuracy_SymbolicComp", 0),
+            session.get("RTs_SymbolicComp", 0),
             risk,
         ),
     )
@@ -542,4 +621,4 @@ def teacher_results():
 # RUN APP
 # -----------------------------
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

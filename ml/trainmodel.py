@@ -12,7 +12,9 @@ features = [
 'Mean_RTs_ANS',
 'wm_K',
 'Accuracy_SymbolicComp',
-'RTs_SymbolicComp'
+'RTs_SymbolicComp',
+'Accuracy_Fraction',
+'RTs_Fraction'
 ]
 
 X = df[features]
